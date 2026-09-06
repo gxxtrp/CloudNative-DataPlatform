@@ -4,11 +4,11 @@ Cloud-Native Data Platform - Data Contract Linter & Compatibility Gatekeeper
 Validates JSON Schemas and enforces backward-compatibility rules in CI/CD.
 """
 
-import glob
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
+
 import jsonschema
 
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -17,12 +17,12 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 
-def load_json(path: Path) -> Dict[str, Any]:
+def load_json(path: Path) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def validate_meta_schema(schema_path: Path, schema: Dict[str, Any]) -> List[str]:
+def validate_meta_schema(schema_path: Path, schema: dict[str, Any]) -> list[str]:
     errors = []
     # 1. Validate Draft-07 syntax
     try:
@@ -49,8 +49,8 @@ def validate_meta_schema(schema_path: Path, schema: Dict[str, Any]) -> List[str]
 
 
 def check_backward_compatibility(
-    old_schema: Dict[str, Any], new_schema: Dict[str, Any]
-) -> List[str]:
+    old_schema: dict[str, Any], new_schema: dict[str, Any]
+) -> list[str]:
     """
     Enforce backward-compatibility rules:
     - No deleted properties
@@ -124,7 +124,7 @@ def main() -> int:
                 ver = schema_data.get("metadata", {}).get("version")
                 owner = schema_data.get("metadata", {}).get("owner_team")
                 print(f"  ✅ Valid Draft-07 Contract: {title} (v{ver}) - Owner: {owner}")
-        except Exception as e:
+        except (json.JSONDecodeError, OSError) as e:
             print(f"  ❌ Failed to parse JSON: {e}")
             total_errors += 1
 
@@ -132,8 +132,8 @@ def main() -> int:
     print("\n[SELF-TEST] Testing backward-compatibility gatekeeper logic...")
     sample = load_json(schema_files[0])
     mutated = json.loads(json.dumps(sample))
-    if "properties" in mutated and mutated["properties"]:
-        del_key = list(mutated["properties"].keys())[0]
+    if mutated.get("properties"):
+        del_key = next(iter(mutated["properties"].keys()))
         del mutated["properties"][del_key]
         breaks = check_backward_compatibility(sample, mutated)
         assert len(breaks) > 0, "Compatibility checker failed to catch deleted field!"

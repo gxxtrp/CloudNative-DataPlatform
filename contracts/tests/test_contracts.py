@@ -1,22 +1,20 @@
 """Unit tests for Cloud-Native Data Contracts and Pydantic runtime models."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 import jsonschema
 import pytest
-from pydantic import ValidationError
-
 from contracts.models import (
     DeadLetterPayload,
-    DeliveryAddress,
-    OrderItem,
     OrderLifecycleEvent,
     OrderStatus,
     PaymentMethod,
     RiderStatus,
     RiderTelemetryEvent,
 )
+from pydantic import ValidationError
 
 
 def load_schema(relative_path: str) -> dict:
@@ -78,7 +76,7 @@ def test_order_lifecycle_negative_amount_fails():
     with pytest.raises(ValidationError):
         OrderLifecycleEvent(
             event_id="11111111-2222-3333-4444-555555555555",
-            event_timestamp=datetime.now(timezone.utc),
+            event_timestamp=datetime.now(UTC),
             order_id="ORD-001",
             order_status=OrderStatus.CREATED,
             merchant_id="MCH-001",
@@ -119,7 +117,7 @@ def test_rider_telemetry_invalid_coordinates():
     with pytest.raises(ValidationError):
         RiderTelemetryEvent(
             event_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-            event_timestamp=datetime.now(timezone.utc),
+            event_timestamp=datetime.now(UTC),
             rider_id="RDR-001",
             latitude=95.0,  # Latitude > 90 must fail
             longitude=100.0,
@@ -134,7 +132,7 @@ def test_dead_letter_payload_model():
         source_topic="orders.lifecycle",
         error_type="SchemaViolation",
         error_message="Missing required field: customer_id",
-        failure_timestamp=datetime.now(timezone.utc),
+        failure_timestamp=datetime.now(UTC),
         retry_count=0,
         raw_payload='{"order_id": "ORD-ERR"}'
     )

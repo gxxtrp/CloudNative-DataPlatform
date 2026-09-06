@@ -5,8 +5,6 @@ Validated against JSON Schema contracts under contracts/schemas/.
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
-from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -28,9 +26,9 @@ class PaymentMethod(str, Enum):
 
 
 class DeliveryAddress(BaseModel):
-    latitude: Optional[float] = Field(default=None, ge=-90.0, le=90.0)
-    longitude: Optional[float] = Field(default=None, ge=-180.0, le=180.0)
-    district: Optional[str] = None
+    latitude: float | None = Field(default=None, ge=-90.0, le=90.0)
+    longitude: float | None = Field(default=None, ge=-180.0, le=180.0)
+    district: str | None = None
     province: str = "Bangkok"
 
 
@@ -50,11 +48,11 @@ class OrderLifecycleEvent(BaseModel):
     order_status: OrderStatus
     merchant_id: str
     customer_id: str
-    rider_id: Optional[str] = None
+    rider_id: str | None = None
     total_amount_baht: float = Field(ge=0.0)
     payment_method: PaymentMethod
-    delivery_address: Optional[DeliveryAddress] = None
-    items: Optional[List[OrderItem]] = None
+    delivery_address: DeliveryAddress | None = None
+    items: list[OrderItem] | None = None
 
 
 class RiderStatus(str, Enum):
@@ -74,11 +72,11 @@ class RiderTelemetryEvent(BaseModel):
     latitude: float = Field(ge=-90.0, le=90.0)
     longitude: float = Field(ge=-180.0, le=180.0)
     geohash: str
-    speed_kmh: Optional[float] = Field(default=None, ge=0.0)
-    heading_degrees: Optional[float] = Field(default=None, ge=0.0, le=360.0)
-    battery_level: Optional[int] = Field(default=None, ge=0, le=100)
+    speed_kmh: float | None = Field(default=None, ge=0.0)
+    heading_degrees: float | None = Field(default=None, ge=0.0, le=360.0)
+    battery_level: int | None = Field(default=None, ge=0, le=100)
     rider_status: RiderStatus
-    current_order_id: Optional[str] = None
+    current_order_id: str | None = None
 
 
 class DeadLetterPayload(BaseModel):
@@ -89,4 +87,4 @@ class DeadLetterPayload(BaseModel):
     failure_timestamp: datetime
     retry_count: int = 0
     raw_payload: str
-    metadata: Optional[dict] = None
+    metadata: dict | None = None

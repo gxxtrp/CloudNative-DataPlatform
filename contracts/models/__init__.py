@@ -12,12 +12,12 @@ from .events import (
 )
 
 __all__ = [
-    "OrderStatus",
-    "PaymentMethod",
+    "DeadLetterPayload",
     "DeliveryAddress",
     "OrderItem",
     "OrderLifecycleEvent",
+    "OrderStatus",
+    "PaymentMethod",
     "RiderStatus",
     "RiderTelemetryEvent",
-    "DeadLetterPayload",
 ]

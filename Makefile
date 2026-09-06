@@ -56,6 +56,26 @@ test-contracts: ## Run Data Contract Schema backward-compatibility linter
 	cd contracts && uv run python linter.py
 
 # ------------------------------------------------------------------------------
+# Domain: Data Platform Operational Engines (contracts/tools/)
+# ------------------------------------------------------------------------------
+
+test-compaction: ## Run autonomous Lakehouse Parquet compactor engine test
+	@echo "[+] Running Lakehouse Compactor test..."
+	cd contracts && uv run pytest tests/test_platform_engines.py -k test_compactor -v
+
+run-batch: ## Run daily batch financial settlement engine test
+	@echo "[+] Running Financial Settlement Engine test..."
+	cd contracts && uv run pytest tests/test_platform_engines.py -k test_settlement -v
+
+test-dlq: ## Run DLQ incident triage and safe replay engine test
+	@echo "[+] Running DLQ Incident Triage test..."
+	cd contracts && uv run pytest tests/test_platform_engines.py -k test_dlq -v
+
+test-streaming: ## Run streaming lakehouse ingestor test
+	@echo "[+] Running Streaming Lakehouse Ingestor test..."
+	cd contracts && uv run pytest tests/test_platform_engines.py -k test_stream_ingestor -v
+
+# ------------------------------------------------------------------------------
 # Domain: Autonomous Go Microservices (apps/)
 # ------------------------------------------------------------------------------
 
