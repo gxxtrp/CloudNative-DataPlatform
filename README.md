@@ -1,7 +1,7 @@
 # Cloud-Native Data Platform
 
 [![CI/CD Pipelines](https://img.shields.io/badge/CI%2FCD-Domain--Scoped%20Workflows-blue)](.github/workflows/)
-[![Data Contracts](https://img.shields.io/badge/Data%20Contracts-Draft--07%20Strict-brightgreen)](contracts/schemas/)
+[![Data Contracts](https://img.shields.io/badge/Data%20Contracts-Strict%20JSON%20Schema-brightgreen)](contracts/schemas/)
 [![Cloud FinOps](https://img.shields.io/badge/AWS%20Cost-%240.00%2Fmo%20Free%20Tier-success)](docs/infra/environments.md)
 [![Lakehouse Architecture](https://img.shields.io/badge/Lakehouse-Apache%20Iceberg%20%2B%20MinIO-orange)](docs/streaming/lakehouse-ingestion.md)
 [![Observability](https://img.shields.io/badge/Observability-Prometheus%20%7C%20Loki%20%7C%20Jaeger%20%7C%20Grafana-purple)](docs/observability/sre-and-monitoring.md)
@@ -23,7 +23,7 @@ flowchart TD
 
     subgraph StreamingLayer["Streaming Ingestion Layer (Namespace: platform & apps)"]
         KONG -->|Kafka Protocol| RP[Redpanda Event Broker<br/>orders.lifecycle & riders.telemetry]
-        RP --> INGEST[stream-ingestor Go Microservice<br/>Draft-07 In-Line Validator]
+        RP --> INGEST[stream-ingestor Go Microservice<br/>Strict JSON Schema Validator]
     end
 
     subgraph Lakehouse["Data Lakehouse Storage (MinIO S3 / Longhorn Isolated)"]
@@ -57,7 +57,7 @@ flowchart TD
 | **Strict $0.00 Cloud Cost** | Local 3-node k3s in WSL2 + AWS S3 Free Tier (5GB) + S3 Gateway Endpoint. Zero EKS fees ($73/mo avoided). | 100% production fidelity with zero operational cloud charges. |
 | **Zero-Trust Network** | Default-Deny Kubernetes `NetworkPolicy` across 6 namespaces (`platform`, `apps`, `observability`, `argocd`, `argo-workflow`, `longhorn-system`). | Eliminates sidecar double-buffering overhead while ensuring strict tenant isolation. |
 | **Host Storage Isolation** | Longhorn CSI configured strictly to dedicated mount `/data/k3s-storage`. | Protects Windows C: and host `/var/lib` from disk churn and storage bloat. |
-| **Data Contract Gates** | Draft-07 JSON Schema validation + backward-compatibility linter in CI + Pydantic v2 runtime models. | Guarantees breaking schema mutations are caught in CI before reaching the event broker. |
+| **Data Contract Gates** | Strict JSON Schema validation + backward-compatibility linter in CI + Pydantic v2 runtime models. | Guarantees breaking schema mutations are caught in CI before reaching the event broker. |
 | **Transactional Outbox** | Atomic PostgreSQL outbox buffer + background relay worker in Go microservices. | Eliminates dual-write inconsistencies between relational state and Kafka topics. |
 | **Autonomous DLQ Healing**| Clustering triager groups incidents by error signature; replay engine simulates remediation dry-runs. | 100% automated recovery for benign schema drift and data formatting faults. |
 | **Storage SRE Compactor** | Autonomous small-file bin-packer rewrites micro-batch stream into optimized Snappy Parquet (83.5% space saved). | Resolves the Lakehouse "small file problem" without interrupting live streams. |
@@ -102,7 +102,7 @@ data-platform/
 │   ├── dev/                   # Dev AppProjects & Applications
 │   └── prod/                  # Prod AppProjects & Applications
 ├── contracts/                 # [Data Governance Domain - Python Self-Contained Package]
-│   ├── schemas/               # Draft-07 JSON Schemas (orders, riders)
+│   ├── schemas/               # Versioned JSON Schemas (orders, riders)
 │   ├── models/                # Pydantic v2 typed event contracts
 │   ├── tests/                 # Contract alignment unit tests
 │   ├── linter.py              # Backward-compatibility CI gatekeeper
@@ -135,7 +135,7 @@ Detailed architectural specifications, mathematical formulations, and engineerin
 | :--- | :--- | :--- |
 | **Infrastructure** | [`docs/infra/provisioning.md`](docs/infra/provisioning.md) | 3-Node k3s topology, Longhorn CSI isolation, and resource limits profile. |
 | **Infrastructure** | [`docs/infra/environments.md`](docs/infra/environments.md) | Dual-environment Terraform IaC, S3 Gateway Endpoint FinOps ($0.00 cloud fee). |
-| **Governance** | [`docs/governance/data-contracts.md`](docs/governance/data-contracts.md) | Draft-07 JSON Schemas, CI compatibility gatekeeper, and evolution rules. |
+| **Governance** | [`docs/governance/data-contracts.md`](docs/governance/data-contracts.md) | Strict JSON Schemas, CI compatibility gatekeeper, and evolution rules. |
 | **Workloads** | [`docs/apps/order-outbox.md`](docs/apps/order-outbox.md) | Transactional Outbox pattern in Go/PostgreSQL, eliminating dual-write hazards. |
 | **Workloads** | [`docs/apps/rider-telemetry.md`](docs/apps/rider-telemetry.md) | Architectural simulation of GPS ingestion, Precision-7 geohashing, and driver state machine. |
 | **Streaming** | [`docs/streaming/lakehouse-ingestion.md`](docs/streaming/lakehouse-ingestion.md) | Redpanda consumer, in-line contract validator, Snappy Parquet, and DLQ sinks. |

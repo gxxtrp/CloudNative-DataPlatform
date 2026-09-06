@@ -14,7 +14,7 @@ flowchart TD
     RP[Redpanda Event Topics<br/>orders.lifecycle.v1 / riders.telemetry.v1] --> INGEST[stream-ingestor Go Engine]
 
     subgraph Validation["In-Line Contract Enforcement"]
-        INGEST --> SCHEMA{Draft-07<br/>JSON Schema<br/>Check}
+        INGEST --> SCHEMA{Strict<br/>JSON Schema<br/>Check}
         SCHEMA -->|PASSED| BUFFER[In-Memory Parquet Buffer<br/>Threshold: 500 records or 15s]
         SCHEMA -->|FAILED| DLQ_PACK[Wrap DeadLetterPayload<br/>with Failure Diagnostics]
     end

@@ -1,7 +1,7 @@
 # Data Governance: Data Contracts & Schema Evolution
 
 **Domain**: Data Governance & Data Quality (`contracts/`)  
-**Scope**: Draft-07 JSON Schemas, CI Compatibility Gatekeeper & Pydantic Runtime Models  
+**Scope**: Strict JSON Schema Contracts, CI Compatibility Gatekeeper & Pydantic Runtime Models  
 
 ---
 
