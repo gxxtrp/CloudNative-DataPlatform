@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: platform
+data:
+  01-create-databases.sql: |
+    CREATE DATABASE orders_db;
+    CREATE DATABASE riders_db;
+    GRANT ALL PRIVILEGES ON DATABASE orders_db TO postgres;
+    GRANT ALL PRIVILEGES ON DATABASE riders_db TO postgres;

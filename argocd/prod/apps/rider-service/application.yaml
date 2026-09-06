@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-app-rider-service
+  namespace: argocd
+  labels:
+    env: prod
+    tier: workload
+    app: rider-service
+spec:
+  project: prod-app-rider-service
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: k8s/apps/rider-service/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

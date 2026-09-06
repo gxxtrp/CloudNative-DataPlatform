@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink-operator-sa
+  namespace: platform
+  labels:
+    app.kubernetes.io/name: flink
+    app.kubernetes.io/component: operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flink-operator-role
+  namespace: platform
+  labels:
+    app.kubernetes.io/name: flink
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps"]
+    verbs: ["*"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink-operator-rb
+  namespace: platform
+  labels:
+    app.kubernetes.io/name: flink
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: flink-operator-role
+subjects:
+  - kind: ServiceAccount
+    name: flink-operator-sa
+    namespace: platform

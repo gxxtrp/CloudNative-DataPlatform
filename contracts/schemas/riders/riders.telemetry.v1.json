@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RiderTelemetryEvent",
+  "description": "Rider Fleet GPS Telemetry Event Contract",
+  "type": "object",
+  "metadata": {
+    "domain": "rider_fleet",
+    "owner_team": "team-rider-dispatch@platform.local",
+    "version": "1.0.0",
+    "sla_freshness_seconds": 15
+  },
+  "required": [
+    "event_id",
+    "event_timestamp",
+    "rider_id",
+    "latitude",
+    "longitude",
+    "geohash",
+    "rider_status"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique ping identifier"
+    },
+    "event_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "GPS capture timestamp in UTC (ISO-8601)"
+    },
+    "rider_id": {
+      "type": "string",
+      "description": "Unique rider identifier (e.g. RDR-BK-9912)"
+    },
+    "latitude": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90,
+      "description": "WGS-84 Latitude coordinate"
+    },
+    "longitude": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180,
+      "description": "WGS-84 Longitude coordinate"
+    },
+    "geohash": {
+      "type": "string",
+      "description": "Spatial geohash index (precision 7)"
+    },
+    "speed_kmh": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Instantaneous rider velocity in km/h"
+    },
+    "heading_degrees": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 360,
+      "description": "Compass heading angle in degrees"
+    },
+    "battery_level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Mobile device battery charge percentage"
+    },
+    "rider_status": {
+      "type": "string",
+      "enum": [
+        "OFFLINE",
+        "AVAILABLE",
+        "EN_ROUTE_TO_MERCHANT",
+        "WAITING_AT_MERCHANT",
+        "DELIVERING_ORDER"
+      ],
+      "description": "Current rider dispatch operational state"
+    },
+    "current_order_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Assigned active order ID, or null if available/offline"
+    }
+  }
+}

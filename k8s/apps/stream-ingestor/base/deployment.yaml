@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stream-ingestor
+  namespace: apps
+  labels:
+    app: stream-ingestor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stream-ingestor
+  template:
+    metadata:
+      labels:
+        app: stream-ingestor
+    spec:
+      containers:
+        - name: stream-ingestor
+          image: platform/stream-ingestor:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PORT
+              value: "8082"
+            - name: REDPANDA_BROKERS
+              value: "redpanda.platform.svc.cluster.local:9092"
+            - name: MINIO_ENDPOINT
+              value: "http://minio.platform.svc.cluster.local:9000"
+            - name: BRONZE_BUCKET
+              value: "lakehouse-bronze"
+          ports:
+            - name: http
+              containerPort: 8082
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8082
+            initialDelaySeconds: 3
+            periodSeconds: 5

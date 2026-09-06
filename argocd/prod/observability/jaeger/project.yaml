@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: prod-observability-jaeger
+  namespace: argocd
+spec:
+  description: "Jaeger OpenTelemetry Distributed Tracing Backend - Prod"
+  sourceRepos:
+    - "https://github.com/example/data-platform.git"
+  destinations:
+    - namespace: observability
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace

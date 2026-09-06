@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: prod-platform-vault
+  namespace: argocd
+spec:
+  description: "HashiCorp Vault Secrets Management & Encryption Engine - Prod"
+  sourceRepos:
+    - "https://github.com/example/data-platform.git"
+  destinations:
+    - namespace: platform
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace

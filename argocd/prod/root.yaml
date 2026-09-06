@@ -1,0 +1,80 @@
+# Master ArgoCD App-of-Apps Root Orchestrator (PROD Environment)
+# Synchronizes autonomous AppProject and Application declarations for platform, apps, and observability.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-platform-root
+  namespace: argocd
+  labels:
+    env: prod
+    tier: control-plane
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: argocd/prod/platform
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-apps-root
+  namespace: argocd
+  labels:
+    env: prod
+    tier: control-plane
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: argocd/prod/apps
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-observability-root
+  namespace: argocd
+  labels:
+    env: prod
+    tier: control-plane
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: argocd/prod/observability
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

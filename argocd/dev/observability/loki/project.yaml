@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: dev-observability-loki
+  namespace: argocd
+spec:
+  description: "Grafana Loki Log Aggregation and Promtail DaemonSet - Dev"
+  sourceRepos:
+    - "https://github.com/example/data-platform.git"
+  destinations:
+    - namespace: observability
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace

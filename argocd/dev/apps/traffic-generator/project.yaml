@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: dev-app-traffic-generator
+  namespace: argocd
+spec:
+  description: "Application traffic-generator (dev)"
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: apps
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-platform-vault
+  namespace: argocd
+  labels:
+    env: prod
+    tier: platform
+    service: vault
+spec:
+  project: prod-platform-vault
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: k8s/platform/vault/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

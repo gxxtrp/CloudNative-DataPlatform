@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: settlement-engine
+  namespace: apps
+  labels:
+    app: settlement-engine
+spec:
+  schedule: "0 2 * * *" # Daily at 02:00 UTC
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: settlement-engine
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: settlement-engine
+              image: platform/settlement-engine:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--date", "2026-09-06"]
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi

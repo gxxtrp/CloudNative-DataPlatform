@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dev-observability-prometheus
+  namespace: argocd
+  labels:
+    env: dev
+    tier: observability
+    service: prometheus
+spec:
+  project: dev-observability-prometheus
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: k8s/observability/prometheus/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

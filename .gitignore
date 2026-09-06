@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data & lakehouse partitions
+data/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

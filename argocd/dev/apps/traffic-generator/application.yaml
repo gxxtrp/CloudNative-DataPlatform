@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dev-app-traffic-generator
+  namespace: argocd
+  labels:
+    env: dev
+    tier: workload
+    app: traffic-generator
+spec:
+  project: dev-app-traffic-generator
+  source:
+    repoURL: https://github.com/example/data-platform.git
+    targetRevision: HEAD
+    path: k8s/apps/traffic-generator/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: apps
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: dev-app-settlement-engine
+  namespace: argocd
+spec:
+  description: "Application settlement-engine (dev)"
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: apps
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
