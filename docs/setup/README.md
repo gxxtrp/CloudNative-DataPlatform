@@ -257,17 +257,32 @@ kubectl get secrets -n platform
 
 ---
 
-## 6. Step 5: (Optional) Secret Inspection & Manual Re-Seeding
+## 6. Step 5: (Optional) Secret Inspection, .env Customization & Re-Seeding
 
 Default credentials for development are seeded automatically during **Sync Wave -1** by the `vault-secret-seeder` Kubernetes Job. 
 
-### Automated Re-Seeding
+### Custom Secrets via `.env`
 
-To manually re-populate or update secrets in Vault from the terminal:
+To override default passwords and endpoints without committing sensitive plaintext to Git:
+1. Copy the reference environment template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Edit `.env` with custom secrets (`.env` and `.env.*` are strictly gitignored).
 
+### Option A: Sync `.env` to Kubernetes for In-Cluster Seeder (`make load-env`)
+Before or during ArgoCD synchronization, sync local `.env` values into the cluster:
+```bash
+make load-env
+```
+This mounts into the `vault-secret-seeder` Job as `vault-seed-env`. If no `.env` is loaded, the Job cleanly falls back to development defaults.
+
+### Option B: Direct CLI Re-Seeding (`make seed-secrets`)
+To re-populate or update secrets in Vault directly from the local terminal:
 ```bash
 make seed-secrets
 ```
+
 
 ### Inspect Stored Secrets
 

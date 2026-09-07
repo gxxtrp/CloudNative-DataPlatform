@@ -19,7 +19,7 @@ RUN_WSL := wsl -d $(WSL_DISTRO) -e
 RUN_WSL_ROOT := wsl -d $(WSL_DISTRO) -u root -e
 endif
 
-.PHONY: help install-tools host-bootstrap host-bootstrap-single host-teardown infra-init infra-plan infra-apply infra-destroy seed-secrets \
+.PHONY: help install-tools host-bootstrap host-bootstrap-single host-teardown infra-init infra-plan infra-apply infra-destroy seed-secrets load-env \
         test-contracts test-streaming test-dlq test-compaction run-batch verify dashboard test
 
 help: ## Show this help message
@@ -64,6 +64,10 @@ infra-destroy: ## Destroy Terraform Infrastructure (self_manage)
 seed-secrets: ## Seed platform and application runtime secrets into Vault KV v2
 	@echo "[+] Seeding runtime secrets into HashiCorp Vault..."
 	$(RUN_WSL) bash infra/bootstrap/seed-vault.sh
+
+load-env: ## Load local .env into vault-system namespace for in-cluster secret seeder
+	@echo "[+] Syncing .env into vault-system namespace..."
+	$(RUN_WSL) bash -c 'if [ -f .env ]; then kubectl create namespace vault-system --dry-run=client -o yaml | kubectl apply -f - >/dev/null 2>&1 || true; kubectl create secret generic vault-seed-env -n vault-system --from-env-file=.env --dry-run=client -o yaml | kubectl apply -f - && echo "[OK] Loaded .env into secret vault-seed-env in namespace vault-system."; else echo "[WARN] No .env file found. Copy .env.example to .env to customize secrets."; fi'
 
 infra-plan-aws: ## Run Terraform Plan for free_tier_aws environment
 	@echo "[+] Running Terraform Plan (free_tier_aws)..."

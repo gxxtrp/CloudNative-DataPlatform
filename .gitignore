@@ -21,6 +21,11 @@ data/
 !*.tfvars.example
 .terraform.lock.hcl
 
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
 # IDE & OS
 .DS_Store
 Thumbs.db

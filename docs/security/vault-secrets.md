@@ -104,3 +104,35 @@ Consumed by: traffic-generator-env ExternalSecret -> traffic-generator deploymen
 | rider-service-external-secret | apps | secret/apps/rider-service | rider-service-env |
 | stream-ingestor-external-secret | apps | secret/apps/stream-ingestor | stream-ingestor-env |
 | traffic-generator-external-secret | apps | secret/apps/traffic-generator | traffic-generator-env |
+
+---
+
+## Seeding Secrets & Environment Customization
+
+The platform supports safe, zero-plaintext-in-git secret management with a two-tiered customization model:
+
+### 1. The Reference Template (`.env.example`)
+All configurable credential environment variables are documented in [.env.example](file:///c:/Users/x/work/data-platfrom/.env.example). Both `.env` and `.env.*` are strictly gitignored to guarantee private credentials are never committed.
+
+To define custom secrets:
+```bash
+cp .env.example .env
+# Edit .env with custom passwords, ports, or endpoints
+```
+
+### 2. Method A: Local Push via CLI (`make seed-secrets`)
+When executing commands locally or in WSL against the exposed Vault endpoint (`:38200`):
+```bash
+make seed-secrets
+```
+The script [infra/bootstrap/seed-vault.sh](file:///c:/Users/x/work/data-platfrom/infra/bootstrap/seed-vault.sh) sources `.env` (falling back to `.env.example` / defaults if `.env` is absent) and writes all values directly into Vault KV v2.
+
+### 3. Method B: In-Cluster Seeding via ArgoCD Job (`make load-env`)
+In automated GitOps deployments, the `vault-secret-seeder` Job ([k8s/security/vault/base/secret-seeder-job.yaml](file:///c:/Users/x/work/data-platfrom/k8s/security/vault/base/secret-seeder-job.yaml)) runs inside the cluster during **Sync Wave -1**.
+- Because GitOps cannot read local uncommitted `.env` files from Git, load local secrets into the cluster once:
+```bash
+make load-env
+```
+This creates or updates a Kubernetes Secret named `vault-seed-env` in the `vault-system` namespace.
+- The `vault-secret-seeder` Job mounts `vault-seed-env` with `optional: true`. If present, custom credentials override the defaults; if absent, the Job safely falls back to standard development credentials without crashing.
+
