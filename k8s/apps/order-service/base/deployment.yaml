@@ -21,11 +21,20 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: PORT
-              value: "8080"
+              valueFrom:
+                secretKeyRef:
+                  name: order-service-env
+                  key: PORT
             - name: REDPANDA_BROKERS
-              value: "redpanda.platform.svc.cluster.local:9092"
+              valueFrom:
+                secretKeyRef:
+                  name: order-service-env
+                  key: REDPANDA_BROKERS
             - name: ORDERS_TOPIC
-              value: "orders.lifecycle"
+              valueFrom:
+                secretKeyRef:
+                  name: order-service-env
+                  key: ORDERS_TOPIC
           ports:
             - name: http
               containerPort: 8080

@@ -21,7 +21,10 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: KONG_GATEWAY_URL
-              value: "http://kong-proxy.platform.svc.cluster.local:80"
+              valueFrom:
+                secretKeyRef:
+                  name: traffic-generator-env
+                  key: KONG_GATEWAY_URL
           resources:
             requests:
               cpu: 50m

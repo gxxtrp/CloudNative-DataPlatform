@@ -1,8 +1,11 @@
-apiVersion: argoproj.io/v1alpha1
+﻿apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: dev-platform-vault
   namespace: argocd
+  annotations:
+    # Sync after bank-vaults operator (wave -1) so Vault CRD is registered
+    argocd.argoproj.io/sync-wave: "0"
   labels:
     env: dev
     tier: platform
@@ -22,3 +25,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true

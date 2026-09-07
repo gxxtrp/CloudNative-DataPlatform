@@ -1,0 +1,38 @@
+﻿apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prod-bank-vaults-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    env: prod
+    tier: platform
+    service: bank-vaults-operator
+spec:
+  project: default
+  source:
+    repoURL: https://charts.bank-vaults.dev
+    chart: vault-operator
+    targetRevision: 1.20.0
+    helm:
+      values: |
+        replicaCount: 1
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        watchNamespace: ""
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

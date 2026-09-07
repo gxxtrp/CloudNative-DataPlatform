@@ -28,9 +28,15 @@ spec:
             - ":9001"
           env:
             - name: MINIO_ROOT_USER
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: access-key
             - name: MINIO_ROOT_PASSWORD
-              value: "SuperSecret2026!"
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: secret-key
           ports:
             - name: s3-api
               containerPort: 9000

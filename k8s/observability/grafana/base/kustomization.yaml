@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
+  - external-secret.yaml
   - datasources-configmap.yaml
   - dashboards-configmap.yaml
   - dashboard-platform-overview-configmap.yaml

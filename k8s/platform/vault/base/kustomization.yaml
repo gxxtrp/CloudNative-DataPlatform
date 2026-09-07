@@ -1,8 +1,18 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - pvc.yaml
-  - configmap.yaml
-  - deployment.yaml
+  # Vault instance managed by bank-vaults operator (auto-unseal, init, KV config)
+  - vault-cr.yaml
+  # NodePort 38200 — kept separate so service name/port stays stable
   - service.yaml
+  # External Secrets Operator resources
+  - secretstore.yaml
+  - clustersecretstore.yaml
+  - external-secrets.yaml
+
+  # Superseded — safe to git rm once committed:
+  #   deployment.yaml  -> operator creates pod via Vault CR
+  #   configmap.yaml   -> HCL config is in vault-cr.yaml spec.config
+  #   job.yaml         -> operator handles init + unseal
+  #   pvc.yaml         -> operator manages PVC via volumeClaimTemplates
