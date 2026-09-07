@@ -5,7 +5,13 @@
 
 set -euo pipefail
 
-echo "Stopping and tearing down 3-node k3s cluster..."
+# Ensure terminal settings (echo, carriage return) are always restored
+_restore_tty() {
+    stty sane 2>/dev/null || stty echo icanon onlcr 2>/dev/null || true
+}
+trap _restore_tty EXIT INT TERM
+
+echo "Stopping and tearing down k3s cluster..."
 
 # 1. Stop and disable all k3s services (server, agents, helpers)
 echo "Stopping all k3s systemd services..."
@@ -16,11 +22,15 @@ for svc in k3s.service k3s-agent.service k3s-worker-stream.service k3s-worker-ba
 done
 sudo systemctl daemon-reload
 
-# 2. Terminate any leftover containerd-shim, containerd, or k3s processes
+# 2. Terminate leftover k3s and container processes safely
+# NOTE: Never use 'pkill -f <name>' here because '-f' matches the full cmdline of
+# 'sudo pkill -f <name>', causing pkill to send SIGKILL to itself and sudo!
+# When sudo is SIGKILLed, it cannot restore tty settings, leaving terminal echo disabled.
 echo "Terminating leftover k3s and container processes..."
-sudo pkill -9 -f containerd-shim 2>/dev/null || true
-sudo pkill -9 -f "k3s server" 2>/dev/null || true
-sudo pkill -9 -f "k3s agent" 2>/dev/null || true
+for proc in containerd-shim containerd-shim-runc-v2 k3s; do
+    sudo killall -9 "$proc" 2>/dev/null || true
+    sudo pkill -9 -x "$proc" 2>/dev/null || true
+done
 
 # 3. Clean up worker network namespaces and virtual bridge
 echo "Cleaning up worker network namespaces and virtual bridge..."
@@ -61,9 +71,10 @@ sudo rm -rf /data/k3s-storage/*
 sudo rm -f /usr/bin/k3s /usr/bin/kubectl
 sudo rm -rf /etc/rancher /var/lib/rancher
 rm -rf "$HOME/.kube"
-if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
-    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    [ -n "$USER_HOME" ] && rm -rf "$USER_HOME/.kube"
+if id "x" &>/dev/null; then
+    X_HOME=$(getent passwd "x" | cut -d: -f6)
+    [ -n "$X_HOME" ] && rm -rf "$X_HOME/.kube"
 fi
 
+_restore_tty
 echo "Teardown complete. Cluster destroyed and slate is completely clean."
