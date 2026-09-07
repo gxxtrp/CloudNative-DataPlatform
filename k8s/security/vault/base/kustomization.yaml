@@ -8,3 +8,4 @@ resources:
   - vault-cr.yaml
   - service.yaml
   - clustersecretstore.yaml
+  - secret-seeder-job.yaml

@@ -165,14 +165,10 @@ make host-bootstrap
 make infra-init
 make infra-apply
 
-# 4. Deploy HashiCorp Vault & seed runtime secrets
-kubectl apply -k k8s/security/vault/overlays/dev
-make seed-secrets
-
-# 5. Deploy GitOps application root (App-of-Apps)
+# 4. Deploy GitOps application root (operators, Vault, datastores, apps)
 kubectl apply -f argocd/dev/root.yaml
 
-# 6. Verify platform health & display active endpoints
+# 5. Verify platform health & display active endpoints
 make verify
 make dashboard
 ```

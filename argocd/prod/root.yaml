@@ -6,6 +6,8 @@ kind: Application
 metadata:
   name: prod-platform-root
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
   labels:
     env: prod
     tier: control-plane
@@ -32,6 +34,8 @@ kind: Application
 metadata:
   name: prod-apps-root
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
   labels:
     env: prod
     tier: control-plane
@@ -58,6 +62,8 @@ kind: Application
 metadata:
   name: prod-observability-root
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   labels:
     env: prod
     tier: control-plane

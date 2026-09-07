@@ -4,8 +4,8 @@ metadata:
   name: dev-platform-vault
   namespace: argocd
   annotations:
-    # Sync after bank-vaults operator (wave -1) so Vault CRD is registered
-    argocd.argoproj.io/sync-wave: "0"
+    # Sync after operators (wave -2) so Vault & ExternalSecrets CRDs are registered
+    argocd.argoproj.io/sync-wave: "-1"
   labels:
     env: dev
     tier: security
