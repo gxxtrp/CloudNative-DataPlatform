@@ -1,4 +1,4 @@
-!/usr/bin/env bash
+#!/usr/bin/env bash
 # ==============================================================================
 # Cloud-Native Data Platform - Single-Node k3s Host Bootstrap Script
 # Target Host OS: WSL2 (AlmaLinux-10) or Bare-Metal Enterprise Linux
@@ -70,7 +70,7 @@ _do_k3s_install() {
     log_info "Installing k3s server (single-node) with secrets encryption..."
     sudo mkdir -p /etc/rancher/k3s
     export INSTALL_K3S_EXEC="server --disable=traefik --node-name=k3s-node --kube-apiserver-arg=service-node-port-range=30000-40000 --write-kubeconfig-mode=644 --secrets-encryption"
-    curl -sfL https://get.k3s.io | sh -
+    curl -sfL https://get.k3s.io | sh -s - server --disable=traefik --node-name=k3s-node --kube-apiserver-arg=service-node-port-range=30000-40000 --write-kubeconfig-mode=644 --secrets-encryption
     unset INSTALL_K3S_EXEC
     log_ok "k3s installed with node name k3s-node."
 }
@@ -91,7 +91,7 @@ else
         # Case (c): wrong node name (old 3-node remnant) — full reinstall
         log_warn "Node name is '${EXISTING_NODE}' (expected k3s-node). Performing reinstall..."
         sudo k3s-uninstall.sh 2>/dev/null || true
-        sudo rm -rf /var/lib/rancher /etc/rancher
+        sudo rm -rf /var/lib/rancher /etc/rancher /run/k3s
         _do_k3s_install
     else
         # Case (d): already correct — reload + restart
@@ -122,22 +122,23 @@ echo ""
 log_ok "k3s-node is Ready."
 
 # 5. Apply node labels for workload scheduling
-#
-# Both workload=streaming and workload=batch are applied to the single node.
-# All existing nodeSelector blocks in k8s/ manifests continue to work unchanged.
-# The scheduler places all pods on the only available node regardless of nodeSelector.
-#
 log_info "Applying node role and workload labels to k3s-node..."
 sudo /usr/local/bin/k3s kubectl label node k3s-node \
+  node-role.kubernetes.io/control-plane="true" \
+  node-role.kubernetes.io/master="true" \
   node-role.kubernetes.io/worker=worker \
   node-role.kubernetes.io/streaming=streaming \
   node-role.kubernetes.io/batch=batch \
-  workload=streaming \
+  workload=single-node \
   --overwrite
-log_ok "Node labels applied: worker, streaming, batch, workload=streaming"
+log_ok "Node labels applied: control-plane, worker, streaming, batch"
 
-# 6. Configure kubeconfig for current user
+# 6. Configure kubeconfig
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
+sudo /usr/local/bin/k3s kubectl config rename-context default k3s-data-platform --kubeconfig /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
+sudo /usr/local/bin/k3s kubectl config use-context k3s-data-platform --kubeconfig /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
+
+# Copy to current user's ~/.kube/config
 mkdir -p "$HOME/.kube"
 sudo cp /etc/rancher/k3s/k3s.yaml "$HOME/.kube/config"
 sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config"
@@ -156,10 +157,19 @@ if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
     fi
 fi
 
-# Rename context to match existing ArgoCD configuration
-kubectl config rename-context default k3s-data-platform 2>/dev/null || true
-kubectl config use-context k3s-data-platform 2>/dev/null || true
-log_ok "kubeconfig written: $HOME/.kube/config (context: k3s-data-platform)"
+# Also sync to user 'x' if present and not already synced
+if id "x" &>/dev/null; then
+    X_HOME=$(getent passwd "x" | cut -d: -f6)
+    if [ -n "$X_HOME" ] && [ -d "$X_HOME" ] && [ "$X_HOME" != "$HOME" ]; then
+        mkdir -p "$X_HOME/.kube"
+        sudo cp /etc/rancher/k3s/k3s.yaml "$X_HOME/.kube/config"
+        sudo chown -R "x:$(id -g x)" "$X_HOME/.kube"
+        sudo chmod 600 "$X_HOME/.kube/config"
+        log_ok "kubeconfig synced to $X_HOME/.kube/config for user x"
+    fi
+fi
+
+log_ok "kubeconfig configured with context: k3s-data-platform"
 
 # Persist KUBECONFIG in shell profiles
 KUBECONFIG_EXPORT='export KUBECONFIG="$HOME/.kube/config"'
@@ -174,6 +184,10 @@ done
 
 # 7. Configure local-path provisioner to use /data/k3s-storage
 log_info "Configuring local-path provisioner storage root to /data/k3s-storage..."
+log_info "Waiting for local-path-config ConfigMap to be ready..."
+until sudo /usr/local/bin/k3s kubectl -n kube-system get cm local-path-config &>/dev/null; do
+    sleep 2
+done
 sudo /usr/local/bin/k3s kubectl -n kube-system patch cm local-path-config --type=merge \
     -p '{"data":{"config.json":"{\"nodePathMap\":[{\"node\":\"DEFAULT_PATH_FOR_NON_LISTED_NODES\",\"paths\":[\"/data/k3s-storage\"]}]}"}}' 2>/dev/null || true
 sudo /usr/local/bin/k3s kubectl -n kube-system rollout restart deploy/local-path-provisioner 2>/dev/null || true
