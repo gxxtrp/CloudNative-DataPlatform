@@ -19,7 +19,7 @@ RUN_WSL := wsl -d $(WSL_DISTRO) -e
 RUN_WSL_ROOT := wsl -d $(WSL_DISTRO) -u root -e
 endif
 
-.PHONY: help install-tools host-bootstrap host-teardown infra-init infra-plan infra-apply infra-destroy \
+.PHONY: help install-tools host-bootstrap host-bootstrap-single host-bootstrap-3node host-teardown infra-init infra-plan infra-apply infra-destroy \
         test-contracts test-streaming test-dlq test-compaction run-batch verify dashboard test
 
 help: ## Show this help message
@@ -37,12 +37,16 @@ install-tools: ## Install all required developer tools, runtimes, and drivers in
 
 create: host-bootstrap ## Alias for host-bootstrap
 
-host-bootstrap: ## Bootstrap native 3-node k3s cluster in WSL2 (AlmaLinux-10)
-	@echo "[+] Starting 3-node k3s bootstrap in WSL2..."
-	$(RUN_WSL) bash infra/bootstrap/host-bootstrap.sh
+host-bootstrap: ## Bootstrap single-node k3s cluster in WSL2 (AlmaLinux-10)
+	@echo "[+] Starting single-node k3s bootstrap in WSL2..."
+	$(RUN_WSL) bash infra/bootstrap/host-bootstrap-single.sh
 
-host-teardown: ## Teardown 3-node k3s cluster in WSL2
-	@echo "[+] Tearing down 3-node k3s cluster in WSL2..."
+host-bootstrap-3node: ## Bootstrap legacy 3-node k3s cluster (archived, high memory usage)
+	@echo "[WARN] 3-node bootstrap is archived. Requires ~3.8GB+ RAM baseline."
+	$(RUN_WSL) bash infra/bootstrap/host-bootstrap-3node-archived.sh
+
+host-teardown: ## Teardown k3s cluster in WSL2 (works for both single and 3-node)
+	@echo "[+] Tearing down k3s cluster in WSL2..."
 	$(RUN_WSL) bash infra/bootstrap/host-teardown.sh
 
 infra-init: ## Initialize Terraform for self_manage environment
@@ -125,7 +129,7 @@ test: ## Run complete automated test suite
 # ------------------------------------------------------------------------------
 
 verify: ## Run comprehensive end-to-end verification smoke test
-	@echo "[+] Verifying 3-node cluster and platform health..."
+	@echo "[+] Verifying single-node cluster and platform health..."
 	$(RUN_WSL) bash -c "kubectl get nodes -o wide && kubectl get pods -A"
 
 dashboard: ## Display all active Web UI endpoints
@@ -137,9 +141,10 @@ dashboard: ## Display all active Web UI endpoints
 	@echo "  Argo Workflows UI:    http://localhost:32746"
 	@echo "  Apache Flink Web UI:  http://localhost:38081"
 	@echo "  Grafana SRE Monitor:  http://localhost:30300"
-	@echo "  Jaeger Tracing UI:    http://localhost:31686"
 	@echo "  Prometheus TSDB:      http://localhost:9090"
 	@echo "  Alertmanager UI:      http://localhost:9093"
 	@echo "  Vault Secrets UI:     http://localhost:38200"
+	@echo "  [DEFERRED] Jaeger:    not deployed (single-node, memory constraints)"
+	@echo "  [DEFERRED] Loki:      not deployed (single-node, memory constraints)"
 	@echo "========================================================================"
 

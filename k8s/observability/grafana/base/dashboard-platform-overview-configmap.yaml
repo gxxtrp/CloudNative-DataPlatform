@@ -1,4 +1,4 @@
-apiVersion: v1
+﻿apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-platform-overview
@@ -11,13 +11,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
       "id": 1,
-      "links": [
-        {
-          "title": "Jaeger Tracing UI",
-          "url": "http://localhost:31686",
-          "targetBlank": true
-        }
-      ],
+      "links": [],
       "liveNow": true,
       "panels": [
         {
@@ -64,11 +58,13 @@ data:
         },
         {
           "id": 7,
-          "title": "Platform Logs (Loki Live Stream)",
-          "type": "logs",
-          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 12 },
-          "datasource": { "type": "loki", "uid": "Loki" },
-          "targets": [{ "expr": "{job=\"kubernetes-pods\"}", "legendFormat": "{{pod}}" }]
+          "title": "Log Aggregation (Loki - Deferred)",
+          "type": "text",
+          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 12 },
+          "options": {
+            "content": "## Loki deferred on single-node k3s (memory constraints).\nUse `kubectl logs` or `stern` for live log tailing.\nLoki will be re-enabled on EKS.",
+            "mode": "markdown"
+          }
         }
       ],
       "refresh": "5s",

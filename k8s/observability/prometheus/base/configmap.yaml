@@ -38,6 +38,7 @@ data:
         static_configs:
           - targets: ['rider-service.apps.svc.cluster.local:8081']
 
-      - job_name: 'jaeger'
-        static_configs:
-          - targets: ['jaeger.observability.svc.cluster.local:14269']
+      # DEFERRED: Jaeger not deployed on single-node k3s. Re-enable on EKS.
+      # - job_name: 'jaeger'
+      #   static_configs:
+      #     - targets: ['jaeger.observability.svc.cluster.local:14269']

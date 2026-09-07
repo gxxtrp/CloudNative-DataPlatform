@@ -1,4 +1,7 @@
-﻿apiVersion: argoproj.io/v1alpha1
+# DEFERRED: Jaeger distributed tracing deferred on single-node k3s (memory constraints).
+# Re-enable automated sync when moving to EKS or adding RAM.
+# Memory saved: ~128 MiB
+apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: dev-observability-jaeger
@@ -7,6 +10,8 @@ metadata:
     env: dev
     tier: observability
     service: jaeger
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   project: dev-observability-jaeger
   source:
@@ -17,9 +22,7 @@ spec:
     server: https://kubernetes.default.svc
     namespace: observability
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    # automated sync disabled - component deferred
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true

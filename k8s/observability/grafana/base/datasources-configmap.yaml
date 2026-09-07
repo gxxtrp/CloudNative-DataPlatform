@@ -22,16 +22,18 @@ data:
           implementation: prometheus
         editable: true
 
-      - name: Loki
-        type: loki
-        access: proxy
-        url: http://loki.observability.svc.cluster.local:3100
-        jsonData:
-          maxLines: 1000
-        editable: true
-
-      - name: Jaeger
-        type: jaeger
-        access: proxy
-        url: http://jaeger.observability.svc.cluster.local:16686
-        editable: true
+      # DEFERRED: Loki and Jaeger are not deployed on single-node k3s (memory constraints).
+      # Uncomment when moving to EKS or when RAM is added.
+      # - name: Loki
+      #   type: loki
+      #   access: proxy
+      #   url: http://loki.observability.svc.cluster.local:3100
+      #   jsonData:
+      #     maxLines: 1000
+      #   editable: true
+      #
+      # - name: Jaeger
+      #   type: jaeger
+      #   access: proxy
+      #   url: http://jaeger.observability.svc.cluster.local:16686
+      #   editable: true
