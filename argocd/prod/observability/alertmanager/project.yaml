@@ -6,7 +6,7 @@ metadata:
 spec:
   description: "Prometheus Alertmanager SRE Incident Router - Prod"
   sourceRepos:
-    - "https://github.com/example/data-platform.git"
+    - "https://github.com/gxxtrp/CloudNative-DataPlatform.git"
   destinations:
     - namespace: observability
       server: https://kubernetes.default.svc

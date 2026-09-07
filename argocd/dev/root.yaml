@@ -12,7 +12,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/example/data-platform.git
+    repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
     targetRevision: HEAD
     path: argocd/dev/platform
     directory:
@@ -38,7 +38,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/example/data-platform.git
+    repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
     targetRevision: HEAD
     path: argocd/dev/apps
     directory:
@@ -64,7 +64,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/example/data-platform.git
+    repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
     targetRevision: HEAD
     path: argocd/dev/observability
     directory:

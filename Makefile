@@ -133,7 +133,7 @@ dashboard: ## Display all active Web UI endpoints
 	@echo "  Cloud-Native Data Platform - Operational Endpoints"
 	@echo "========================================================================"
 	@echo "  Kong API Gateway:     http://localhost:30000/api/v1"
-	@echo "  ArgoCD GitOps UI:     http://localhost:30080"
+	@echo "  ArgoCD GitOps UI:     https://localhost:30443 (HTTP: 30080)"
 	@echo "  Argo Workflows UI:    http://localhost:32746"
 	@echo "  Apache Flink Web UI:  http://localhost:38081"
 	@echo "  Grafana SRE Monitor:  http://localhost:30300"

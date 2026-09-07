@@ -70,7 +70,7 @@ flowchart TD
 | Subsystem | Service | UI Endpoint | Protocol / Default Port |
 | :--- | :--- | :--- | :--- |
 | **Ingress Gateway** | Kong API Gateway | `http://localhost:30000/api/v1` | HTTP REST / NodePort 30000 |
-| **GitOps Control Plane** | ArgoCD UI | `http://localhost:30080` | HTTP / NodePort 30080 |
+| **GitOps Control Plane** | ArgoCD UI | `https://localhost:30443` | HTTPS / NodePort 30443 (HTTP: 30080) |
 | **Batch DAG Orchestrator**| Argo Workflows UI | `http://localhost:32746` | HTTP / NodePort 32746 |
 | **Distributed Storage** | Longhorn Storage UI | `http://localhost:30088` | HTTP / NodePort 30088 |
 | **Stream Processing** | Apache Flink Web UI | `http://localhost:38081` | HTTP / NodePort 38081 |

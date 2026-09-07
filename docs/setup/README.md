@@ -329,18 +329,21 @@ vault kv get secret/apps/order-service
 
 ---
 
-## 7. Step 6: Autonomous Microservices Compilation & Contract Linting
+## 7. Step 6: (Optional) Local Validation & Contract Linting
 
-Verify and compile all application binaries and validate schema contracts:
+> [!NOTE]
+> **CI/CD Automation:** In standard GitOps operations, **you do not need to build images locally**. The GitHub Actions CI/CD pipeline ([.github/workflows/cd-build.yaml](file:///c:/Users/x/work/data-platfrom/.github/workflows/cd-build.yaml)) automatically compiles Go binaries, builds distroless container images, and pushes them to `ghcr.io` upon every push to `main`.
+> 
+> The commands below are **local developer convenience targets** used to test schema changes and verify syntax locally before committing:
 
 ```bash
-# 1. Enforce Data Contract schema backward-compatibility
+# 1. (Recommended) Validate Data Contract backward-compatibility
 make test-contracts
 
-# 2. Compile all 5 autonomous Go microservices
+# 2. (Optional) Fast local Go syntax/type check without waiting for CI (outputs to /dev/null)
 make build-apps
 
-# 3. (Optional) Build container images locally
+# 3. (Optional) Build Docker images locally (only needed for offline/custom image development)
 make docker-build
 ```
 
@@ -360,8 +363,8 @@ kubectl apply -f argocd/dev/root.yaml
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 echo ""
 
-# 3. Verify App-of-Apps synchronization
-argocd login localhost:30080 --username admin --password <password> --insecure
+# 3. Verify App-of-Apps synchronization (ArgoCD CLI connects via HTTPS NodePort 30443)
+argocd login localhost:30443 --username admin --password <password> --insecure --skip-test-tls --grpc-web
 argocd app list
 ```
 
@@ -405,7 +408,7 @@ Run `make dashboard` to view all active endpoints:
 | Subsystem | Service | Local Web UI URL | Purpose |
 | :--- | :--- | :--- | :--- |
 | **API Ingress** | Kong API Gateway | `http://localhost:30000/api/v1` | Public API ingress for mobile orders and GPS pings. |
-| **GitOps Engine** | ArgoCD | `http://localhost:30080` | Continuous Delivery & App-of-Apps sync status. |
+| **GitOps Engine** | ArgoCD | `https://localhost:30443` | Continuous Delivery & App-of-Apps sync status (HTTP: 30080). |
 | **Batch DAG Engine** | Argo Workflows | `http://localhost:32746` | Daily financial settlement & reconciliation DAGs. |
 | **Distributed Storage**| Longhorn CSI | `http://localhost:30088` | Volume replication, backups, and disk allocation. |
 | **Stream Engine** | Apache Flink | `http://localhost:38081` | Real-time streaming metrics & CEP jobs. |

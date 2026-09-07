@@ -6,7 +6,7 @@ metadata:
 spec:
   description: "Prometheus TSDB and SRE Metrics Scrape Engine - Dev"
   sourceRepos:
-    - "https://github.com/example/data-platform.git"
+    - "https://github.com/gxxtrp/CloudNative-DataPlatform.git"
   destinations:
     - namespace: observability
       server: https://kubernetes.default.svc

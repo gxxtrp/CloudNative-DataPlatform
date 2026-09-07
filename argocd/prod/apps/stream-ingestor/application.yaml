@@ -10,7 +10,7 @@ metadata:
 spec:
   project: prod-app-stream-ingestor
   source:
-    repoURL: https://github.com/example/data-platform.git
+    repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
     targetRevision: HEAD
     path: k8s/apps/stream-ingestor/overlays/prod
   destination:
