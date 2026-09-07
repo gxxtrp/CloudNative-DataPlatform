@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # ==============================================================================
 # Cloud-Native Data Platform - Single-Node k3s Host Bootstrap Script
 # Target Host OS: WSL2 (AlmaLinux-10) or Bare-Metal Enterprise Linux
@@ -71,10 +71,32 @@ if ! command -v k3s &>/dev/null; then
       --secrets-encryption" sh -
     log_ok "k3s server installed with single-node mode and secrets encryption."
 else
-    log_info "k3s binary already installed. Ensuring k3s service is active..."
-    sudo chmod 644 /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
-    sudo systemctl restart k3s
-    log_ok "k3s service restarted."
+    # Check if the existing node is named 'k3s-node' (single-node) or something
+    # else (e.g. 'k3s-control-plane' from the old 3-node setup).
+    # If mismatched, a full uninstall + reinstall is required — merely restarting
+    # preserves the old node name and causes an infinite wait below.
+    EXISTING_NODE=$(sudo /usr/local/bin/k3s kubectl get nodes --no-headers 2>/dev/null | awk '{print $1}' | head -1)
+    if [ -n "${EXISTING_NODE}" ] && [ "${EXISTING_NODE}" != "k3s-node" ]; then
+        log_warn "Existing k3s node is '${EXISTING_NODE}', not 'k3s-node' (old 3-node remnant)."
+        log_warn "Performing full k3s uninstall + reinstall with correct node name..."
+        sudo k3s-uninstall.sh 2>/dev/null || true
+        sudo rm -rf /var/lib/rancher /etc/rancher /run/k3s /run/flannel
+        log_info "Reinstalling k3s server (single-node) with secrets encryption..."
+        sudo mkdir -p /etc/rancher/k3s
+        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
+          --disable=traefik \
+          --node-name=k3s-node \
+          --kube-apiserver-arg=service-node-port-range=30000-40000 \
+          --write-kubeconfig-mode=644 \
+          --secrets-encryption" sh -
+        log_ok "k3s reinstalled with node name k3s-node."
+    else
+        log_info "k3s already installed. Reloading and restarting service..."
+        sudo chmod 644 /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
+        sudo systemctl daemon-reload
+        sudo systemctl restart k3s
+        log_ok "k3s service restarted."
+    fi
 fi
 
 # Ensure k3s and kubectl symlinks exist in /usr/bin for sudo secure_path
