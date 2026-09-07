@@ -33,7 +33,7 @@ spec:
               memory: 512Mi
             limits:
               cpu: 1000m
-              memory: 768Mi
+              memory: 1024Mi
           volumeMounts:
             - name: flink-config-volume
               mountPath: /opt/flink/conf

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: stream-ingestor
-          image: platform/stream-ingestor:latest
+          image: ghcr.io/gxxtrp/stream-ingestor:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: PORT

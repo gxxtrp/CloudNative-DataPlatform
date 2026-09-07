@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: platform/order-service:latest
+          image: ghcr.io/gxxtrp/order-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: PORT

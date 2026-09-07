@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rider-service
-          image: platform/rider-service:latest
+          image: ghcr.io/gxxtrp/rider-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: PORT

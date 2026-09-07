@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: traffic-generator
-          image: platform/traffic-generator:latest
+          image: ghcr.io/gxxtrp/traffic-generator:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: KONG_GATEWAY_URL
