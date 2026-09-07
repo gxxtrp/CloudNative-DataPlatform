@@ -15,6 +15,6 @@ output "ui_endpoints" {
     argocd         = "http://localhost:30080"
     argo_workflows = "http://localhost:32746"
     flink          = "http://localhost:38081"
-    grafana        = "http://localhost:3000"
+    grafana        = "http://localhost:30300"
   }
 }

@@ -7,14 +7,18 @@ metadata:
     app: flink
     component: jobmanager
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - name: rpc
       port: 6123
+      targetPort: 6123
     - name: blob
       port: 6124
+      targetPort: 6124
     - name: webui
       port: 8081
+      targetPort: 8081
+      nodePort: 38081
   selector:
     app: flink
     component: jobmanager

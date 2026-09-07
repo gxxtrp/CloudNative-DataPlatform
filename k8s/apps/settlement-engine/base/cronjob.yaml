@@ -21,7 +21,6 @@ spec:
             - name: settlement-engine
               image: ghcr.io/gxxtrp/settlement-engine:latest
               imagePullPolicy: IfNotPresent
-              args: ["--date", "2026-09-06"]
               resources:
                 requests:
                   cpu: 100m
