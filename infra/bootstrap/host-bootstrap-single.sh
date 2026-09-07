@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+!/usr/bin/env bash
 # ==============================================================================
 # Cloud-Native Data Platform - Single-Node k3s Host Bootstrap Script
 # Target Host OS: WSL2 (AlmaLinux-10) or Bare-Metal Enterprise Linux
@@ -60,38 +60,42 @@ log_ok "Storage pool prepared at /data/k3s-storage."
 # --secrets-encryption:           AES-GCM encryption of K8s Secrets at rest
 # --kube-apiserver-arg:           Extend NodePort range to 30000-40000
 #
-if ! command -v k3s &>/dev/null; then
+# Detection logic:
+#   a) No k3s binary at all               -> fresh install
+#   b) k3s binary present, no k3s.service -> reinstall (post-teardown state)
+#   c) k3s binary present, wrong nodename -> uninstall + reinstall
+#   d) k3s binary present, k3s-node name  -> daemon-reload + restart
+#
+_do_k3s_install() {
     log_info "Installing k3s server (single-node) with secrets encryption..."
     sudo mkdir -p /etc/rancher/k3s
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
-      --disable=traefik \
-      --node-name=k3s-node \
-      --kube-apiserver-arg=service-node-port-range=30000-40000 \
-      --write-kubeconfig-mode=644 \
-      --secrets-encryption" sh -
-    log_ok "k3s server installed with single-node mode and secrets encryption."
+    export INSTALL_K3S_EXEC="server --disable=traefik --node-name=k3s-node --kube-apiserver-arg=service-node-port-range=30000-40000 --write-kubeconfig-mode=644 --secrets-encryption"
+    curl -sfL https://get.k3s.io | sh -
+    unset INSTALL_K3S_EXEC
+    log_ok "k3s installed with node name k3s-node."
+}
+
+if ! command -v k3s &>/dev/null; then
+    # Case (a): binary absent — fresh install
+    _do_k3s_install
+elif ! sudo systemctl is-enabled k3s &>/dev/null 2>&1; then
+    # Case (b): binary present but service missing (post-teardown, teardown removes
+    # the service but leaves the binary). Reinstall to recreate the systemd unit.
+    log_warn "k3s binary found but k3s.service is absent (post-teardown state)."
+    log_warn "Running installer to recreate the systemd unit..."
+    _do_k3s_install
 else
-    # Check if the existing node is named 'k3s-node' (single-node) or something
-    # else (e.g. 'k3s-control-plane' from the old 3-node setup).
-    # If mismatched, a full uninstall + reinstall is required — merely restarting
-    # preserves the old node name and causes an infinite wait below.
+    # Binary present AND service present. Check node name.
     EXISTING_NODE=$(sudo /usr/local/bin/k3s kubectl get nodes --no-headers 2>/dev/null | awk '{print $1}' | head -1)
     if [ -n "${EXISTING_NODE}" ] && [ "${EXISTING_NODE}" != "k3s-node" ]; then
-        log_warn "Existing k3s node is '${EXISTING_NODE}', not 'k3s-node' (old 3-node remnant)."
-        log_warn "Performing full k3s uninstall + reinstall with correct node name..."
+        # Case (c): wrong node name (old 3-node remnant) — full reinstall
+        log_warn "Node name is '${EXISTING_NODE}' (expected k3s-node). Performing reinstall..."
         sudo k3s-uninstall.sh 2>/dev/null || true
-        sudo rm -rf /var/lib/rancher /etc/rancher /run/k3s /run/flannel
-        log_info "Reinstalling k3s server (single-node) with secrets encryption..."
-        sudo mkdir -p /etc/rancher/k3s
-        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
-          --disable=traefik \
-          --node-name=k3s-node \
-          --kube-apiserver-arg=service-node-port-range=30000-40000 \
-          --write-kubeconfig-mode=644 \
-          --secrets-encryption" sh -
-        log_ok "k3s reinstalled with node name k3s-node."
+        sudo rm -rf /var/lib/rancher /etc/rancher
+        _do_k3s_install
     else
-        log_info "k3s already installed. Reloading and restarting service..."
+        # Case (d): already correct — reload + restart
+        log_info "k3s already configured correctly. Restarting service..."
         sudo chmod 644 /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
         sudo systemctl daemon-reload
         sudo systemctl restart k3s
