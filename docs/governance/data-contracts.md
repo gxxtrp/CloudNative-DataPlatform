@@ -49,7 +49,7 @@ Every contract schema in `contracts/schemas/` must adhere to the Platform Data C
 
 | Requirement | Purpose | Enforcement |
 | :--- | :--- | :--- |
-| **`$schema`** | Declares standard `http://json-schema.org/draft-07/schema#` | Checked by CI meta-linter |
+| **`$schema`** | Declares standard JSON Schema specification URI | Checked by CI meta-linter |
 | **`title`** | Canonical event identifier (e.g., `OrderLifecycleEvent`, `RiderTelemetryEvent`) | Mandatory top-level string |
 | **`metadata.domain`** | Owning business domain (`food_delivery`, `rider_fleet`, `settlement`) | Mandatory metadata object |
 | **`metadata.owner_team`** | Responsible engineering team email (e.g. `team-order-checkout@platform.local`) | Regex validation in linter |

@@ -1,4 +1,4 @@
-﻿apiVersion: argoproj.io/v1alpha1
+apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: prod-platform-vault
@@ -7,17 +7,17 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
   labels:
     env: prod
-    tier: platform
+    tier: security
     service: vault
 spec:
   project: prod-platform-vault
   source:
     repoURL: https://github.com/example/data-platform.git
     targetRevision: HEAD
-    path: k8s/platform/vault/overlays/prod
+    path: k8s/security/vault/overlays/prod
   destination:
     server: https://kubernetes.default.svc
-    namespace: platform
+    namespace: vault-system
   syncPolicy:
     automated:
       prune: true

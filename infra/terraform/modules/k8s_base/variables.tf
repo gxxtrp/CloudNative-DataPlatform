@@ -7,7 +7,6 @@ variable "namespaces" {
     "observability",
     "argocd",
     "argo-workflow",
-    "longhorn-system",
   ]
 }
 

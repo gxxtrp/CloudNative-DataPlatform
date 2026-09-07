@@ -1,7 +1,7 @@
 """Lakehouse Streaming Ingestor Engine.
 
 Consumes order lifecycle and rider telemetry events, validates them against
-strict Draft-07 data contracts, writes valid records as Snappy columnar Parquet
+strict data contracts, writes valid records as Snappy columnar Parquet
 to lakehouse-bronze with date/hour partitioning, and routes poison pills to DLQ.
 """
 
@@ -42,7 +42,7 @@ class LakehouseStreamIngestor:
             return json.load(f)
 
     def validate_event(self, event: dict[str, Any], event_type: str = "order") -> tuple[bool, str | None]:
-        """Validate an event payload against its corresponding Draft-07 schema."""
+        """Validate an event payload against its corresponding schema."""
         schema = self.order_schema if event_type == "order" else self.rider_schema
         validator = jsonschema.Draft7Validator(schema)
         errors = list(validator.iter_errors(event))

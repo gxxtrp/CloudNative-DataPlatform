@@ -55,32 +55,31 @@ flowchart TD
 
 ---
 
-## 2. Storage Management & Isolation (Longhorn CSI)
+## 2. Storage Management & Isolation (k3s Built-in local-path)
 
-To protect the host root filesystem (`/` and `/var/lib`) from disk bloat, Longhorn CSI is configured strictly to a dedicated mount path:
-- **CSI Provisioner**: `driver.longhorn.io`
-- **Isolated Storage Path**: Configured strictly to `/data/k3s-storage` via Longhorn `default-data-path`.
-- **StorageClass**: `longhorn-isolated` (set as cluster default).
-- **Multi-Node Volume Resilience**: Uses 2-replica volume replication (`numberOfReplicas: 2`) across worker nodes.
-- **Storage Management UI**: Accessible at `http://localhost:30088`.
+To protect the host root filesystem (`/` and `/var/lib`) from disk bloat while keeping resource usage minimal (~15 MiB RAM, 1 pod), storage is provisioned by k3s built-in `local-path-provisioner` mapped to a dedicated host mount:
+- **Provisioner**: `rancher.io/local-path`
+- **Isolated Storage Path**: Configured strictly to `/data/k3s-storage` via `local-path-config`.
+- **StorageClass**: `local-path` (set as cluster default). An alias `longhorn-isolated` is also maintained for backwards compatibility.
+- **Performance**: Direct host filesystem mount (near-native SSD speed, zero virtualization or iSCSI overhead).
 
 ---
 
-## 3. Continuous Resource Limits Profile (< 3.8 GB RAM Baseline)
+## 3. Continuous Resource Limits Profile (< 2.2 GB RAM Baseline)
 
 | Component | Subsystem | CPU Limit | Memory Limit | PVC Size | Target Node | Lifecycle |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Kong Gateway** | API Ingress Proxy | 200m | 250Mi | None (DB-less) | `k3s-worker-stream` | Continuous |
-| **Redpanda** | Kafka Streaming Broker | 500m | 512Mi | 2Gi (`longhorn-isolated`) | `k3s-worker-stream` | Continuous |
-| **PostgreSQL** | App DB & Transactional Outbox | 250m | 256Mi | 1Gi (`longhorn-isolated`) | `k3s-control-plane` | Continuous |
-| **MinIO** | S3 Medallion Lakehouse Storage | 300m | 384Mi | 3Gi (`longhorn-isolated`) | `k3s-worker-batch` | Continuous |
+| **Redpanda** | Kafka Streaming Broker | 500m | 512Mi | 2Gi (`local-path`) | `k3s-worker-stream` | Continuous |
+| **PostgreSQL** | App DB & Transactional Outbox | 250m | 256Mi | 1Gi (`local-path`) | `k3s-control-plane` | Continuous |
+| **MinIO** | S3 Medallion Lakehouse Storage | 300m | 384Mi | 3Gi (`local-path`) | `k3s-worker-batch` | Continuous |
 | **Flink JobManager** | Stream Orchestrator | 250m | 384Mi | None | `k3s-worker-stream` | Continuous |
 | **Flink TaskManager**| Stream Processing Worker | 500m | 512Mi | None | `k3s-worker-stream` | Continuous |
 | **ArgoCD Core** | GitOps Reconciler | 250m | 256Mi | None | `k3s-control-plane` | Continuous |
 | **Argo Workflows** | Batch DAG Controller | 200m | 200Mi | None | `k3s-control-plane` | Continuous |
-| **Vault** | Secrets Management | 200m | 192Mi | 500Mi (`longhorn-isolated`) | `k3s-control-plane` | Continuous |
-| **Prometheus** | SRE Metrics TSDB | 250m | 384Mi | 2Gi (`longhorn-isolated`) | `k3s-control-plane` | Continuous |
-| **Loki** | Log Aggregation Engine | 200m | 256Mi | 1Gi (`longhorn-isolated`) | `k3s-control-plane` | Continuous |
+| **Vault** | Secrets Management | 200m | 192Mi | 500Mi (`local-path`) | `k3s-control-plane` | Continuous |
+| **Prometheus** | SRE Metrics TSDB | 250m | 384Mi | 2Gi (`local-path`) | `k3s-control-plane` | Continuous |
+| **Loki** | Log Aggregation Engine | 200m | 256Mi | 1Gi (`local-path`) | `k3s-control-plane` | Continuous |
 | **Jaeger** | Distributed Tracing Backend | 150m | 192Mi | None (in-memory) | `k3s-control-plane` | Continuous |
 | **Grafana** | Visualization & Dashboards | 150m | 192Mi | None | `k3s-control-plane` | Continuous |
 

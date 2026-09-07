@@ -44,3 +44,7 @@ target-version = "py311"
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
+
+[tool.uv]
+link-mode = "copy"
+

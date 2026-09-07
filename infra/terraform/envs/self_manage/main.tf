@@ -31,20 +31,10 @@ module "k8s_base" {
 }
 
 # ------------------------------------------------------------------------------
-# Module 2: Longhorn Distributed CSI Storage (Prerequisite for PVCs)
-# ------------------------------------------------------------------------------
-module "storage_longhorn" {
-  source        = "../../modules/storage_longhorn"
-  data_path     = "/data/k3s-storage"
-  replica_count = 2
-
-  depends_on = [module.k8s_base]
-}
-
-# ------------------------------------------------------------------------------
-# Module 3: GitOps Substrate (ArgoCD Core & Argo Workflows)
+# Module 2: GitOps Substrate (ArgoCD Core & Argo Workflows)
 # ArgoCD takes over Day-1/Day-2 deployment for all platform engines,
 # Kafka topics, MinIO buckets, Gateway API ingress, and application workloads.
+# Note: Storage is provided natively by k3s built-in local-path provisioner.
 # ------------------------------------------------------------------------------
 module "gitops_argo" {
   source = "../../modules/gitops_argo"

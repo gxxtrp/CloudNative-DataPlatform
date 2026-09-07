@@ -1,4 +1,0 @@
-﻿# SUPERSEDED — safe to git rm
-# PVC is now managed by the bank-vaults operator via StatefulSet volumeClaimTemplates.
-# The operator creates vault-file-vault-0 PVC automatically.
-# See: k8s/platform/vault/base/vault-cr.yaml spec.volumeClaimTemplates

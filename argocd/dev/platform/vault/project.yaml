@@ -8,8 +8,12 @@ spec:
   sourceRepos:
     - "https://github.com/example/data-platform.git"
   destinations:
-    - namespace: platform
+    - namespace: vault-system
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
+    - group: "external-secrets.io"
+      kind: ClusterSecretStore
+    - group: "rbac.authorization.k8s.io"
+      kind: ClusterRoleBinding

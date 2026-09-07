@@ -6,8 +6,20 @@ SHELL := bash
 .SHELLFLAGS := -euo pipefail -c
 
 WSL_DISTRO := AlmaLinux-10
+export UV_LINK_MODE ?= copy
 
-.PHONY: help host-bootstrap host-teardown infra-init infra-plan infra-apply infra-destroy \
+# Detect if executing inside WSL or native Linux environment
+IS_INSIDE_WSL := $(shell if [ -f /proc/version ] && grep -qi microsoft /proc/version 2>/dev/null; then echo 1; else echo 0; fi)
+
+ifeq ($(IS_INSIDE_WSL),1)
+RUN_WSL :=
+RUN_WSL_ROOT := sudo
+else
+RUN_WSL := wsl -d $(WSL_DISTRO) -e
+RUN_WSL_ROOT := wsl -d $(WSL_DISTRO) -u root -e
+endif
+
+.PHONY: help install-tools host-bootstrap host-teardown infra-init infra-plan infra-apply infra-destroy \
         test-contracts test-streaming test-dlq test-compaction run-batch verify dashboard test
 
 help: ## Show this help message
@@ -19,13 +31,19 @@ help: ## Show this help message
 # Domain: Platform Infrastructure & Host Bootstrap (infra/)
 # ------------------------------------------------------------------------------
 
+install-tools: ## Install all required developer tools, runtimes, and drivers in WSL
+	@echo "[+] Installing developer tools, CLIs, and drivers in WSL..."
+	$(RUN_WSL_ROOT) bash infra/bootstrap/install-tools.sh
+
+create: host-bootstrap ## Alias for host-bootstrap
+
 host-bootstrap: ## Bootstrap native 3-node k3s cluster in WSL2 (AlmaLinux-10)
 	@echo "[+] Starting 3-node k3s bootstrap in WSL2..."
-	wsl -d $(WSL_DISTRO) -e bash infra/bootstrap/host-bootstrap.sh
+	$(RUN_WSL) bash infra/bootstrap/host-bootstrap.sh
 
 host-teardown: ## Teardown 3-node k3s cluster in WSL2
 	@echo "[+] Tearing down 3-node k3s cluster in WSL2..."
-	wsl -d $(WSL_DISTRO) -e bash infra/bootstrap/host-teardown.sh
+	$(RUN_WSL) bash infra/bootstrap/host-teardown.sh
 
 infra-init: ## Initialize Terraform for self_manage environment
 	@echo "[+] Initializing Terraform (self_manage)..."
@@ -108,7 +126,7 @@ test: ## Run complete automated test suite
 
 verify: ## Run comprehensive end-to-end verification smoke test
 	@echo "[+] Verifying 3-node cluster and platform health..."
-	wsl -d $(WSL_DISTRO) -e bash -c "kubectl get nodes -o wide && kubectl get pods -A"
+	$(RUN_WSL) bash -c "kubectl get nodes -o wide && kubectl get pods -A"
 
 dashboard: ## Display all active Web UI endpoints
 	@echo "========================================================================"
@@ -117,7 +135,6 @@ dashboard: ## Display all active Web UI endpoints
 	@echo "  Kong API Gateway:     http://localhost:30000/api/v1"
 	@echo "  ArgoCD GitOps UI:     http://localhost:30080"
 	@echo "  Argo Workflows UI:    http://localhost:32746"
-	@echo "  Longhorn Storage UI:  http://localhost:30088"
 	@echo "  Apache Flink Web UI:  http://localhost:38081"
 	@echo "  Grafana SRE Monitor:  http://localhost:30300"
 	@echo "  Jaeger Tracing UI:    http://localhost:31686"

@@ -27,7 +27,7 @@ class DLQTriageEngine:
         self._load_schemas()
 
     def _load_schemas(self) -> None:
-        """Load all Draft-07 JSON schemas for contract re-validation."""
+        """Load all JSON schemas for contract re-validation."""
         for schema_file in self.schemas_dir.glob("**/*.json"):
             try:
                 with open(schema_file, "r", encoding="utf-8") as f:
@@ -98,7 +98,7 @@ class DLQTriageEngine:
                 "can_auto_heal": False,
             }
 
-        # Run Draft-07 validation
+        # Run schema validation
         validator = jsonschema.Draft7Validator(target_schema)
         errors = list(validator.iter_errors(inner_payload))
 

@@ -1,4 +1,4 @@
-﻿# Vault Secret Requirements
+# Vault Secret Requirements
 
 All secrets consumed by the platform are pulled at runtime via the **External Secrets Operator** from HashiCorp Vault KV v2 (secret/ engine).
 **No values are stored in git.** This file is the single source of truth for what secrets must be created in Vault before workloads can start.
@@ -103,9 +103,6 @@ Consumed by: 	raffic-generator-env ExternalSecret -> 	raffic-generator deploymen
 | minio-external-secret | platform | secret/platform/minio | minio-credentials |
 | postgres-external-secret | platform | secret/platform/postgres | postgres-credentials |
 | grafana-external-secret | observability | secret/observability/grafana | grafana-credentials |
-| order-service-external-secret | apps | secret/apps/order-service | order-service-env |
-| 
-ider-service-external-secret | apps | secret/apps/rider-service | 
-ider-service-env |
+| rider-service-external-secret | apps | secret/apps/rider-service | rider-service-env |
 | stream-ingestor-external-secret | apps | secret/apps/stream-ingestor | stream-ingestor-env |
-| 	raffic-generator-external-secret | apps | secret/apps/traffic-generator | 	raffic-generator-env |
+| traffic-generator-external-secret | apps | secret/apps/traffic-generator | traffic-generator-env |

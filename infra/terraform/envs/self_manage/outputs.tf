@@ -4,8 +4,8 @@ output "namespaces" {
 }
 
 output "storage_class" {
-  description = "Default Longhorn storage class"
-  value       = module.storage_longhorn.storage_class_name
+  description = "Default storage class"
+  value       = "local-path"
 }
 
 output "ui_endpoints" {
@@ -14,7 +14,6 @@ output "ui_endpoints" {
     kong_gateway   = "http://localhost:30000/api/v1"
     argocd         = "http://localhost:30080"
     argo_workflows = "http://localhost:32746"
-    longhorn       = "http://localhost:30088"
     flink          = "http://localhost:38081"
     grafana        = "http://localhost:3000"
   }

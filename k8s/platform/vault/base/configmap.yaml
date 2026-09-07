@@ -1,4 +1,0 @@
-﻿# SUPERSEDED — safe to git rm
-# Vault HCL config has been moved into vault-cr.yaml spec.config.
-# The bank-vaults operator renders and mounts the HCL automatically.
-# See: k8s/platform/vault/base/vault-cr.yaml

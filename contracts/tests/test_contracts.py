@@ -61,7 +61,7 @@ def test_order_lifecycle_event_valid():
         ]
     }
     
-    # Verify Draft-07 jsonschema validation
+    # Verify jsonschema validation
     jsonschema.validate(instance=event_dict, schema=schema)
 
     # Verify Pydantic model parsing
@@ -103,7 +103,7 @@ def test_rider_telemetry_event_valid():
         "current_order_id": "ORD-BKK-90123"
     }
     
-    # Verify Draft-07 jsonschema validation
+    # Verify jsonschema validation
     jsonschema.validate(instance=telemetry_dict, schema=schema)
 
     # Verify Pydantic model parsing

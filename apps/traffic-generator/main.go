@@ -56,7 +56,7 @@ func main() {
 
 			var amount float64 = float64(rand.Intn(500) + 50)
 			if isChaos {
-				// Chaos injection: negative amount violates Draft-07 schema contract
+				// Chaos injection: negative amount violates schema contract
 				amount = -999.00
 				log.Printf("[CHAOS_INJECTOR] Injecting schema violation: order_id=ord-%d, amount=%.2f", orderSeq, amount)
 			}

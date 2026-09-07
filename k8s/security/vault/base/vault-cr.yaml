@@ -1,16 +1,30 @@
-﻿apiVersion: vault.banzaicloud.com/v1alpha1
+apiVersion: vault.banzaicloud.com/v1alpha1
 kind: Vault
 metadata:
   name: vault
-  namespace: platform
+  namespace: vault-system
   labels:
     app.kubernetes.io/name: vault
-    app.kubernetes.io/part-of: cloudnative-dataplatform
     app.kubernetes.io/component: security-secrets
+    app.kubernetes.io/part-of: cloudnative-dataplatform
 spec:
   size: 1
   image: hashicorp/vault:1.16.1
   bankVaultsImage: ghcr.io/bank-vaults/bank-vaults:latest
+
+  serviceAccount: vault
+
+  vaultEnvsConfig:
+    - name: SKIP_SETCAP
+      value: "true"
+    - name: SKIP_CHOWN
+      value: "true"
+
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+
+  securityContext:
+    fsGroup: 1000
 
   resources:
     vault:
@@ -21,16 +35,13 @@ spec:
         cpu: 250m
         memory: 128Mi
 
-  # Auto-unseal: operator stores unseal key + root token in this K8s Secret.
-  # Secret is created in-cluster — no values ever touch git.
-  # Prereq: k3s etcd encrypted at rest (--encrypt recommended).
   unsealConfig:
     kubernetes:
-      secretNamespace: platform
+      secretNamespace: vault-system
       secretName: vault-unseal-keys
 
-  # Vault HCL config (replaces configmap.yaml + deployment.yaml)
   config:
+    disable_mlock: true
     storage:
       file:
         path: /vault/file
@@ -39,18 +50,16 @@ spec:
         address: "0.0.0.0:8200"
         tls_disable: true
     ui: true
-    api_addr: "http://vault.platform.svc.cluster.local:8200"
-    cluster_addr: "http://vault.platform.svc.cluster.local:8201"
+    api_addr: "http://vault.vault-system.svc.cluster.local:8200"
+    cluster_addr: "http://vault.vault-system.svc.cluster.local:8201"
 
-  # Operator manages PVC lifecycle via StatefulSet volumeClaimTemplates.
-  # The old standalone pvc.yaml (vault-data-pvc) is superseded and can be git rm'd.
   volumeClaimTemplates:
     - metadata:
         name: vault-file
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: longhorn-isolated
+        storageClassName: local-path
         resources:
           requests:
             storage: 1Gi
@@ -59,9 +68,6 @@ spec:
     - name: vault-file
       mountPath: /vault/file
 
-  # Declarative Vault bootstrap (replaces vault-init Job).
-  # Only configures structure — no secret values written here.
-  # See: docs/security/vault-secrets.md for what to provision in each path.
   externalConfig:
     policies:
       - name: platform-workloads
@@ -78,8 +84,9 @@ spec:
         roles:
           - name: platform-workloads
             bound_service_account_names:
-              - default
+              - "*"
             bound_service_account_namespaces:
+              - vault-system
               - platform
               - apps
               - observability
@@ -89,6 +96,6 @@ spec:
     secrets:
       - path: secret
         type: kv
-        description: "KV v2 secrets engine — paths defined in docs/security/vault-secrets.md"
+        description: "KV v2 secrets engine for platform & application credentials"
         options:
           version: "2"

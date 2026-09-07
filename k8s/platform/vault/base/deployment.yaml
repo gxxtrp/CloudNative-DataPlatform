@@ -1,4 +1,0 @@
-﻿# SUPERSEDED — safe to git rm
-# This Deployment has been replaced by the bank-vaults operator Vault CR.
-# The operator creates and manages the Vault pod from vault-cr.yaml spec.
-# See: k8s/platform/vault/base/vault-cr.yaml

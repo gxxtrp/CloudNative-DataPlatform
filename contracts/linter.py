@@ -24,11 +24,11 @@ def load_json(path: Path) -> dict[str, Any]:
 
 def validate_meta_schema(schema_path: Path, schema: dict[str, Any]) -> list[str]:
     errors = []
-    # 1. Validate Draft-07 syntax
+    # 1. Validate schema syntax
     try:
         jsonschema.Draft7Validator.check_schema(schema)
     except jsonschema.exceptions.SchemaError as e:
-        errors.append(f"Invalid JSON Schema Draft-07 syntax: {e.message}")
+        errors.append(f"Invalid JSON Schema syntax: {e.message}")
 
     # 2. Enforce Data Contract metadata requirements
     metadata = schema.get("metadata")
@@ -123,7 +123,7 @@ def main() -> int:
                 title = schema_data.get("title")
                 ver = schema_data.get("metadata", {}).get("version")
                 owner = schema_data.get("metadata", {}).get("owner_team")
-                print(f"  ✅ Valid Draft-07 Contract: {title} (v{ver}) - Owner: {owner}")
+                print(f"  ✅ Valid Contract: {title} (v{ver}) - Owner: {owner}")
         except (json.JSONDecodeError, OSError) as e:
             print(f"  ❌ Failed to parse JSON: {e}")
             total_errors += 1

@@ -1,4 +1,0 @@
-﻿# SUPERSEDED — safe to git rm
-# Vault init + unseal is now handled by the bank-vaults operator.
-# Unseal keys are stored in the vault-unseal-keys Secret (in-cluster, not in git).
-# See: k8s/platform/vault/base/vault-cr.yaml

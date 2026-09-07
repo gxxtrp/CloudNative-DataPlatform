@@ -3,7 +3,7 @@
 1. Lakehouse Compactor (small-file bin-packing, Snappy compression, record integrity, cleanup)
 2. Daily Financial Settlement (reconciliation math, VAT/commission, zero-tolerance quality gates)
 3. DLQ Self-Healing & Safe Replay (error signature classification, dry-run simulation)
-4. Stream Ingestion (Draft-07 schema validation, Parquet micro-batches, DLQ quarantine)
+4. Stream Ingestion (Schema validation, Parquet micro-batches, DLQ quarantine)
 """
 
 from __future__ import annotations

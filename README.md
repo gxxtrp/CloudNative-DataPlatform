@@ -133,6 +133,7 @@ Detailed architectural specifications, mathematical formulations, and engineerin
 
 | Domain | Specification Document | Description |
 | :--- | :--- | :--- |
+| **Setup & Operations**| [`docs/setup/README.md`](docs/setup/README.md) | Complete end-to-end setup guide: toolchain, 3-node cluster, Terraform, Vault, and GitOps. |
 | **Infrastructure** | [`docs/infra/provisioning.md`](docs/infra/provisioning.md) | 3-Node k3s topology, Longhorn CSI isolation, and resource limits profile. |
 | **Infrastructure** | [`docs/infra/environments.md`](docs/infra/environments.md) | Dual-environment Terraform IaC, S3 Gateway Endpoint FinOps ($0.00 cloud fee). |
 | **Governance** | [`docs/governance/data-contracts.md`](docs/governance/data-contracts.md) | Strict JSON Schemas, CI compatibility gatekeeper, and evolution rules. |
@@ -143,39 +144,33 @@ Detailed architectural specifications, mathematical formulations, and engineerin
 | **Operations** | [`docs/operations/lakehouse-compaction.md`](docs/operations/lakehouse-compaction.md) | Solving the small-file problem with autonomous bin-packing (83.5% space reduction). |
 | **Batch Analytics** | [`docs/batch/financial-settlement.md`](docs/batch/financial-settlement.md) | Two-sided ledger reconciliation, VAT/commission math, and zero-tolerance quality gates. |
 | **Observability** | [`docs/observability/sre-and-monitoring.md`](docs/observability/sre-and-monitoring.md) | The Three Pillars (Metrics, Logs, Traces) + Alerting and SRE SLO definitions. |
+| **Security** | [`docs/security/vault-secrets.md`](docs/security/vault-secrets.md) | HashiCorp Vault KV v2 secret specifications and ExternalSecrets mapping. |
 
 ---
 
 ## 🚀 Quickstart & Developer Workflow
 
-### Prerequisites
-- Python 3.11+ with `uv` (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- Go 1.22+
-- WSL2 with AlmaLinux-10 (for native 3-node Kubernetes cluster)
-- Terraform v1.8+
+> 📖 **Full Guide**: For complete end-to-end instructions, see the [Platform Setup & Operations Guide](docs/setup/README.md).
 
-### Common Makefile Commands
+### Quick Setup Commands
 
 ```bash
-# 1. View all available CLI targets
-make help
+# 1. Install all required developer tools, runtimes, and storage drivers in WSL
+make install-tools
 
-# 2. Run Data Contract compatibility gatekeeper & pytest suite
+# 2. Bootstrap native 3-node k3s cluster in WSL2 (AlmaLinux-10)
+make host-bootstrap
+
+# 3. Initialize and apply local Terraform infrastructure (Longhorn CSI, ArgoCD)
+make infra-init
+make infra-apply
+
+# 4. Compile autonomous Go microservices & validate Data Contracts
+make build-apps
 make test-contracts
 make test
 
-# 3. Compile all 5 autonomous Go microservices
-make build-apps
-
-# 4. Initialize and plan Terraform infrastructure
-make infra-init
-make infra-plan       # Local self_manage environment
-make infra-plan-aws   # Strict $0.00 AWS Free Tier environment
-
-# 5. Bootstrap native 3-node k3s cluster in WSL2
-make host-bootstrap
-
-# 6. Display all active Web UI endpoints
+# 5. Display active Web UI endpoints
 make dashboard
 ```
 
