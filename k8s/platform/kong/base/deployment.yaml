@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: kong
-          image: kong:3.6.1-alpine
+          image: kong:3.6.1
           env:
             - name: KONG_DATABASE
               value: "off"

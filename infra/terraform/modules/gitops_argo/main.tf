@@ -31,6 +31,11 @@ resource "helm_release" "argocd" {
   }
 
   set {
+    name  = "server.service.nodePortHttps"
+    value = "30443"
+  }
+
+  set {
     name  = "server.insecure"
     value = "true"
   }

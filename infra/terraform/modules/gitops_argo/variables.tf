@@ -1,7 +1,7 @@
 variable "argocd_chart_version" {
   description = "ArgoCD Helm chart version"
   type        = string
-  default     = "6.7.0"
+  default     = "10.8.2"
 }
 
 variable "argo_workflows_chart_version" {
