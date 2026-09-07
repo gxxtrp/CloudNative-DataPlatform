@@ -19,7 +19,7 @@ RUN_WSL := wsl -d $(WSL_DISTRO) -e
 RUN_WSL_ROOT := wsl -d $(WSL_DISTRO) -u root -e
 endif
 
-.PHONY: help install-tools host-bootstrap host-bootstrap-single host-teardown infra-init infra-plan infra-apply infra-destroy \
+.PHONY: help install-tools host-bootstrap host-bootstrap-single host-teardown infra-init infra-plan infra-apply infra-destroy seed-secrets \
         test-contracts test-streaming test-dlq test-compaction run-batch verify dashboard test
 
 help: ## Show this help message
@@ -60,6 +60,10 @@ infra-apply: ## Apply Terraform Infrastructure for self_manage environment
 infra-destroy: ## Destroy Terraform Infrastructure (self_manage)
 	@echo "[+] Destroying Terraform Infrastructure (self_manage)..."
 	cd infra/terraform/envs/self_manage && terraform destroy -auto-approve
+
+seed-secrets: ## Seed platform and application runtime secrets into Vault KV v2
+	@echo "[+] Seeding runtime secrets into HashiCorp Vault..."
+	$(RUN_WSL) bash infra/bootstrap/seed-vault.sh
 
 infra-plan-aws: ## Run Terraform Plan for free_tier_aws environment
 	@echo "[+] Running Terraform Plan (free_tier_aws)..."

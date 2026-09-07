@@ -67,9 +67,7 @@ Consumed by: order-service-env ExternalSecret -> order-service deployment.
 | REDPANDA_BROKERS | Kafka-compatible broker address |
 | RIDERS_TOPIC | Redpanda topic name for rider telemetry |
 
-Consumed by: 
-ider-service-env ExternalSecret -> 
-ider-service deployment.
+Consumed by: rider-service-env ExternalSecret -> rider-service deployment.
 
 ---
 
@@ -92,7 +90,7 @@ Consumed by: stream-ingestor-env ExternalSecret -> stream-ingestor deployment.
 | --- | --- |
 | KONG_GATEWAY_URL | Kong proxy base URL |
 
-Consumed by: 	raffic-generator-env ExternalSecret -> 	raffic-generator deployment.
+Consumed by: traffic-generator-env ExternalSecret -> traffic-generator deployment.
 
 ---
 

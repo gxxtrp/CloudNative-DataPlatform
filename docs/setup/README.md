@@ -240,6 +240,15 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=vault -n vault-
 
 Per [docs/security/vault-secrets.md](file:///c:/Users/x/work/data-platfrom/docs/security/vault-secrets.md), **no secrets are stored in git**. The platform uses the **External Secrets Operator** pulling credentials at runtime from HashiCorp Vault KV v2 (`secret/` engine).
 
+### Automated Secret Seeding (Recommended)
+
+Execute the automated seeding target:
+```bash
+make seed-secrets
+```
+
+*Or manually set connection and execute the individual `vault kv put` commands below:*
+
 ### 1. Set Connection & Retrieve Auto-Generated Root Token
 
 Bank-Vaults automatically stores the initialized root token in the `vault-unseal-keys` Kubernetes Secret in the `vault-system` namespace:

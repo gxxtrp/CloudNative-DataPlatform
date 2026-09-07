@@ -54,9 +54,9 @@ flowchart TD
 
 | Capability | Implementation Detail | Business / Engineering Impact |
 | :--- | :--- | :--- |
-| **Strict $0.00 Cloud Cost** | Local 3-node k3s in WSL2 + AWS S3 Free Tier (5GB) + S3 Gateway Endpoint. Zero EKS fees ($73/mo avoided). | 100% production fidelity with zero operational cloud charges. |
-| **Zero-Trust Network** | Default-Deny Kubernetes `NetworkPolicy` across 6 namespaces (`platform`, `apps`, `observability`, `argocd`, `argo-workflow`, `longhorn-system`). | Eliminates sidecar double-buffering overhead while ensuring strict tenant isolation. |
-| **Host Storage Isolation** | Longhorn CSI configured strictly to dedicated mount `/data/k3s-storage`. | Protects Windows C: and host `/var/lib` from disk churn and storage bloat. |
+| **Strict $0.00 Cloud Cost** | Local single-node k3s in WSL2 + AWS S3 Free Tier (5GB) + S3 Gateway Endpoint. Zero EKS fees ($73/mo avoided). | 100% production fidelity with zero operational cloud charges. |
+| **Zero-Trust Network** | Default-Deny Kubernetes `NetworkPolicy` across core namespaces (`platform`, `apps`, `observability`, `argocd`, `argo-workflow`). | Eliminates sidecar double-buffering overhead while ensuring strict tenant isolation. |
+| **Host Storage Isolation** | Built-in `local-path` storage provisioner configured strictly to dedicated mount `/data/k3s-storage`. | Protects Windows C: and host `/var/lib` from disk churn and storage bloat. |
 | **Data Contract Gates** | Strict JSON Schema validation + backward-compatibility linter in CI + Pydantic v2 runtime models. | Guarantees breaking schema mutations are caught in CI before reaching the event broker. |
 | **Transactional Outbox** | Atomic PostgreSQL outbox buffer + background relay worker in Go microservices. | Eliminates dual-write inconsistencies between relational state and Kafka topics. |
 | **Autonomous DLQ Healing**| Clustering triager groups incidents by error signature; replay engine simulates remediation dry-runs. | 100% automated recovery for benign schema drift and data formatting faults. |
@@ -72,13 +72,12 @@ flowchart TD
 | **Ingress Gateway** | Kong API Gateway | `http://localhost:30000/api/v1` | HTTP REST / NodePort 30000 |
 | **GitOps Control Plane** | ArgoCD UI | `https://localhost:30443` | HTTPS / NodePort 30443 (HTTP: 30080) |
 | **Batch DAG Orchestrator**| Argo Workflows UI | `http://localhost:32746` | HTTP / NodePort 32746 |
-| **Distributed Storage** | Longhorn Storage UI | `http://localhost:30088` | HTTP / NodePort 30088 |
 | **Stream Processing** | Apache Flink Web UI | `http://localhost:38081` | HTTP / NodePort 38081 |
 | **SRE Observability** | Grafana Dashboards | `http://localhost:30300` | HTTP / NodePort 30300 |
-| **Distributed Tracing** | Jaeger UI | `http://localhost:31686` | HTTP / NodePort 31686 |
 | **Secrets Management** | HashiCorp Vault UI | `http://localhost:38200` | HTTP / NodePort 38200 |
 | **Metrics TSDB** | Prometheus | `http://localhost:9090` | HTTP / ClusterIP 9090 |
-| **Log Aggregator** | Loki API | `http://localhost:3100` | HTTP / ClusterIP 3100 |
+| **[DEFERRED] Tracing** | Jaeger UI | `http://localhost:31686` | Deferred in dev (single-node memory) |
+| **[DEFERRED] Logging** | Loki API | `http://localhost:3100` | Deferred in dev (single-node memory) |
 
 ---
 
@@ -117,11 +116,12 @@ data-platform/
 │   ├── batch/                 # Batch settlement DAG & financial quality gate specs
 │   └── observability/         # Observability architecture, Prometheus, Loki, Jaeger
 ├── infra/                     # [Platform Substrate & Cloud IaC]
-│   ├── bootstrap/             # Native 3-node k3s cluster setup in WSL2
-│   └── terraform/             # Substrate namespaces & Longhorn CSI (modules/ & envs/)
+│   ├── bootstrap/             # Single-node k3s cluster setup in WSL2
+│   └── terraform/             # Substrate namespaces & ArgoCD GitOps (modules/ & envs/)
 └── k8s/                       # [Declarative Kubernetes Manifests by Kind]
-    ├── platform/              # Kong, PostgreSQL, Redpanda, MinIO, Flink, Vault
-    ├── observability/         # Prometheus, Alertmanager, Loki, Jaeger, Grafana
+    ├── platform/              # Kong, PostgreSQL, Redpanda, MinIO, Flink
+    ├── observability/         # Prometheus, Alertmanager, Grafana (Loki/Jaeger deferred)
+    ├── security/              # HashiCorp Vault StatefulSet & ClusterSecretStore
     └── apps/                  # Workload deployment manifests & overlays
 ```
 
@@ -133,8 +133,8 @@ Detailed architectural specifications, mathematical formulations, and engineerin
 
 | Domain | Specification Document | Description |
 | :--- | :--- | :--- |
-| **Setup & Operations**| [`docs/setup/README.md`](docs/setup/README.md) | Complete end-to-end setup guide: toolchain, 3-node cluster, Terraform, Vault, and GitOps. |
-| **Infrastructure** | [`docs/infra/provisioning.md`](docs/infra/provisioning.md) | 3-Node k3s topology, Longhorn CSI isolation, and resource limits profile. |
+| **Setup & Operations**| [`docs/setup/README.md`](docs/setup/README.md) | Complete end-to-end setup guide: toolchain, single-node cluster, Terraform, Vault, and GitOps. |
+| **Infrastructure** | [`docs/infra/provisioning.md`](docs/infra/provisioning.md) | Single-node k3s topology, local-path storage isolation, and resource limits profile. |
 | **Infrastructure** | [`docs/infra/environments.md`](docs/infra/environments.md) | Dual-environment Terraform IaC, S3 Gateway Endpoint FinOps ($0.00 cloud fee). |
 | **Governance** | [`docs/governance/data-contracts.md`](docs/governance/data-contracts.md) | Strict JSON Schemas, CI compatibility gatekeeper, and evolution rules. |
 | **Workloads** | [`docs/apps/order-outbox.md`](docs/apps/order-outbox.md) | Transactional Outbox pattern in Go/PostgreSQL, eliminating dual-write hazards. |
@@ -158,19 +158,22 @@ Detailed architectural specifications, mathematical formulations, and engineerin
 # 1. Install all required developer tools, runtimes, and storage drivers in WSL
 make install-tools
 
-# 2. Bootstrap native 3-node k3s cluster in WSL2 (AlmaLinux-10)
+# 2. Bootstrap single-node k3s cluster in WSL2 (AlmaLinux-10)
 make host-bootstrap
 
-# 3. Initialize and apply local Terraform infrastructure (Longhorn CSI, ArgoCD)
+# 3. Initialize and apply local Terraform substrate (namespaces, ArgoCD)
 make infra-init
 make infra-apply
 
-# 4. Compile autonomous Go microservices & validate Data Contracts
-make build-apps
-make test-contracts
-make test
+# 4. Deploy HashiCorp Vault & seed runtime secrets
+kubectl apply -k k8s/security/vault/overlays/dev
+make seed-secrets
 
-# 5. Display active Web UI endpoints
+# 5. Deploy GitOps application root (App-of-Apps)
+kubectl apply -f argocd/dev/root.yaml
+
+# 6. Verify platform health & display active endpoints
+make verify
 make dashboard
 ```
 
