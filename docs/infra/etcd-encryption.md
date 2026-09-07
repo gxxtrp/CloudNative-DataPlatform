@@ -1,4 +1,4 @@
-﻿# Kubernetes Secrets Encryption at Rest (k3s)
+# Kubernetes Secrets Encryption at Rest (k3s)
 
 ## Default Behaviour
 
@@ -23,7 +23,7 @@ When the flag is passed at server start, k3s:
 
 ## Fresh Cluster (default path)
 
-The bootstrap script (`infra/bootstrap/host-bootstrap.sh`) passes `--secrets-encryption`
+The bootstrap script (`infra/bootstrap/host-bootstrap-single.sh`) passes `--secrets-encryption`
 during install. No manual steps needed.
 
 Verify:

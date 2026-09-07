@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Cloud-Native Data Platform - 3-Node k3s Host Teardown Script
+# Cloud-Native Data Platform - k3s Host Teardown Script
 # ==============================================================================
 
 set -euo pipefail
@@ -15,11 +15,9 @@ echo "Stopping and tearing down k3s cluster..."
 
 # 1. Stop and disable all k3s services (server, agents, helpers)
 echo "Stopping all k3s systemd services..."
-for svc in k3s.service k3s-agent.service k3s-worker-stream.service k3s-worker-batch.service k3s-worker-netns.service k3s-nodeport-relay.service; do
-    sudo systemctl stop "$svc" 2>/dev/null || true
-    sudo systemctl disable "$svc" 2>/dev/null || true
-    sudo rm -f "/etc/systemd/system/$svc"
-done
+sudo systemctl stop 'k3s*.service' 2>/dev/null || true
+sudo systemctl disable 'k3s*.service' 2>/dev/null || true
+sudo rm -f /etc/systemd/system/k3s*.service
 sudo systemctl daemon-reload
 
 # 2. Terminate leftover k3s and container processes safely

@@ -32,14 +32,9 @@ echo "========================================================================"
 # ------------------------------------------------------------------------------
 # 1. Base OS Packages (AlmaLinux DNF)
 # ------------------------------------------------------------------------------
-log_info "Installing base OS packages via dnf (make, golang, openssl, iscsi, cryptsetup)..."
-dnf install -y make golang openssl iscsi-initiator-utils cryptsetup curl tar unzip jq iptables-nft >/dev/null
+log_info "Installing base OS packages via dnf (make, golang, openssl, curl, tar, unzip, jq)..."
+dnf install -y make golang openssl curl tar unzip jq iptables-nft >/dev/null
 log_ok "Base OS packages installed."
-
-# Start & enable iscsid for Longhorn CSI block volume support
-log_info "Configuring iscsid.service for Longhorn CSI..."
-systemctl enable --now iscsid.service 2>/dev/null || true
-log_ok "iscsid.service active."
 
 # ------------------------------------------------------------------------------
 # 2. System-wide uv (Fast Python Package Manager)
@@ -165,7 +160,5 @@ printf "%-14s : %s\n" "argocd" "$(argocd version --client --short 2>/dev/null ||
 printf "%-14s : %s\n" "vault" "$(vault version)"
 printf "%-14s : %s\n" "k9s" "$(k9s version --short 2>/dev/null || which k9s)"
 printf "%-14s : %s\n" "aws" "$(aws --version)"
-printf "%-14s : %s\n" "iscsiadm" "$(iscsiadm -V 2>/dev/null || which iscsiadm)"
-printf "%-14s : %s\n" "cryptsetup" "$(cryptsetup --version)"
 printf "%-14s : %s\n" "openssl" "$(openssl version)"
 echo "========================================================================"

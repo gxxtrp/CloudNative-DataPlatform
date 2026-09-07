@@ -66,11 +66,13 @@ log_ok "Storage pool prepared at /data/k3s-storage."
 #   c) k3s binary present, wrong nodename -> uninstall + reinstall
 #   d) k3s binary present, k3s-node name  -> daemon-reload + restart
 #
+K3S_EXEC_ARGS="server --disable=traefik --node-name=k3s-node --kube-apiserver-arg=service-node-port-range=30000-40000 --write-kubeconfig-mode=644 --secrets-encryption"
+
 _do_k3s_install() {
     log_info "Installing k3s server (single-node) with secrets encryption..."
     sudo mkdir -p /etc/rancher/k3s
-    export INSTALL_K3S_EXEC="server --disable=traefik --node-name=k3s-node --kube-apiserver-arg=service-node-port-range=30000-40000 --write-kubeconfig-mode=644 --secrets-encryption"
-    curl -sfL https://get.k3s.io | sh -s - server --disable=traefik --node-name=k3s-node --kube-apiserver-arg=service-node-port-range=30000-40000 --write-kubeconfig-mode=644 --secrets-encryption
+    export INSTALL_K3S_EXEC="${K3S_EXEC_ARGS}"
+    curl -sfL https://get.k3s.io | sh -s - ${K3S_EXEC_ARGS}
     unset INSTALL_K3S_EXEC
     log_ok "k3s installed with node name k3s-node."
 }
@@ -133,42 +135,29 @@ sudo /usr/local/bin/k3s kubectl label node k3s-node \
   --overwrite
 log_ok "Node labels applied: control-plane, worker, streaming, batch"
 
-# 6. Configure kubeconfig
+# 6. Configure kubeconfig and sync contexts
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
 sudo /usr/local/bin/k3s kubectl config rename-context default k3s-data-platform --kubeconfig /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
 sudo /usr/local/bin/k3s kubectl config use-context k3s-data-platform --kubeconfig /etc/rancher/k3s/k3s.yaml 2>/dev/null || true
 
-# Copy to current user's ~/.kube/config
-mkdir -p "$HOME/.kube"
-sudo cp /etc/rancher/k3s/k3s.yaml "$HOME/.kube/config"
-sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config"
-chmod 600 "$HOME/.kube/config"
+_install_kubeconfig_for() {
+    local target_user="$1"
+    local target_home
+    target_home=$(getent passwd "$target_user" 2>/dev/null | cut -d: -f6)
+    if [ -n "$target_home" ] && [ -d "$target_home" ]; then
+        mkdir -p "$target_home/.kube"
+        sudo cp /etc/rancher/k3s/k3s.yaml "$target_home/.kube/config"
+        sudo chown -R "$target_user:$(id -g "$target_user")" "$target_home/.kube"
+        sudo chmod 600 "$target_home/.kube/config"
+        log_ok "kubeconfig installed for $target_user at $target_home/.kube/config"
+    fi
+}
+
+_install_kubeconfig_for "$(id -un)"
+[ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ] && _install_kubeconfig_for "$SUDO_USER"
+id "x" &>/dev/null && [ "$(id -un)" != "x" ] && _install_kubeconfig_for "x"
+
 export KUBECONFIG="$HOME/.kube/config"
-
-# Sync to non-root calling user if run via sudo
-if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
-    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    if [ -n "$USER_HOME" ] && [ -d "$USER_HOME" ]; then
-        mkdir -p "$USER_HOME/.kube"
-        sudo cp /etc/rancher/k3s/k3s.yaml "$USER_HOME/.kube/config"
-        sudo chown -R "$SUDO_USER:$(id -g "$SUDO_USER")" "$USER_HOME/.kube"
-        sudo chmod 600 "$USER_HOME/.kube/config"
-        log_ok "kubeconfig synced to $USER_HOME/.kube/config for user $SUDO_USER"
-    fi
-fi
-
-# Also sync to user 'x' if present and not already synced
-if id "x" &>/dev/null; then
-    X_HOME=$(getent passwd "x" | cut -d: -f6)
-    if [ -n "$X_HOME" ] && [ -d "$X_HOME" ] && [ "$X_HOME" != "$HOME" ]; then
-        mkdir -p "$X_HOME/.kube"
-        sudo cp /etc/rancher/k3s/k3s.yaml "$X_HOME/.kube/config"
-        sudo chown -R "x:$(id -g x)" "$X_HOME/.kube"
-        sudo chmod 600 "$X_HOME/.kube/config"
-        log_ok "kubeconfig synced to $X_HOME/.kube/config for user x"
-    fi
-fi
-
 log_ok "kubeconfig configured with context: k3s-data-platform"
 
 # Persist KUBECONFIG in shell profiles
