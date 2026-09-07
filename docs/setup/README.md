@@ -1,7 +1,7 @@
 # Cloud-Native Data Platform: End-to-End Setup & Operations Guide
 
 **Domain**: Platform Infrastructure, Engineering Operations & Developer Experience (`docs/setup/`)  
-**Scope**: Complete From-Scratch Provisioning, Toolchain Automation, Native 3-Node k3s Cluster in WSL2, Terraform Substrate, HashiCorp Vault Secrets, and GitOps ArgoCD Synchronization.
+**Scope**: Complete From-Scratch Provisioning, Toolchain Automation, Single-Node k3s Cluster in WSL2, Terraform Substrate, HashiCorp Vault Secrets, and GitOps ArgoCD Synchronization.
 
 ---
 
@@ -9,7 +9,7 @@
 
 1. [Architecture & System Prerequisites](#1-architecture--system-prerequisites)
 2. [Step 1: Automated Toolchain & Dependency Installation](#2-step-1-automated-toolchain--dependency-installation)
-3. [Step 2: Native 3-Node k3s Cluster Bootstrap](#3-step-2-native-3-node-k3s-cluster-bootstrap)
+3. [Step 2: Single-Node k3s Cluster Bootstrap](#3-step-2-single-node-k3s-cluster-bootstrap)
 4. [Step 3: Platform Substrate Provisioning (Terraform IaC)](#4-step-3-platform-substrate-provisioning-terraform-iac)
 5. [Step 4: Deploy HashiCorp Vault & Security Operators](#5-step-4-deploy-hashicorp-vault--security-operators)
 6. [Step 5: Seed Platform Runtime Secrets into Vault](#6-step-5-seed-platform-runtime-secrets-into-vault)
@@ -23,37 +23,28 @@
 
 ## 1. Architecture & System Prerequisites
 
-The platform executes entirely within a native 3-node Kubernetes cluster hosted inside **WSL2 (AlmaLinux-10)** on Windows, providing 100% production fidelity with strict zero Docker-in-Docker overhead and a **$0.00 cloud cost guarantee**.
+The platform executes entirely within a resource-optimized, single-node Kubernetes cluster hosted inside **WSL2 (AlmaLinux-10)** on Windows, providing 100% production fidelity with strict zero Docker-in-Docker overhead, a **$0.00 cloud cost guarantee**, and a lightweight **~1.1 GiB baseline RAM footprint**.
 
 ```mermaid
 flowchart TD
     subgraph WindowsHost["Windows 10/11 Host"]
         subgraph WSL["WSL2: AlmaLinux-10 (systemd enabled)"]
-            subgraph CP["Control Plane (Host Network: 172.31.x.x)"]
-                K8S[k3s-control-plane :6443]
-                ARGO[ArgoCD Core :30080]
+            subgraph Node["Unified Node: k3s-node (control-plane + streaming + batch)"]
+                K8S[k3s API Server :6443]
+                ARGO[ArgoCD Core :30080 / :30443]
+                WF[Argo Workflows :32746]
+                KONG[Kong API Gateway :30000]
+                RP[Redpanda Kafka Broker]
+                FLINK[Apache Flink :38081]
+                MINIO[MinIO Lakehouse S3 :9000]
+                VAULT[HashiCorp Vault :38200]
                 PROM[Prometheus :9090]
                 GRAF[Grafana :30300]
+                APPS[Autonomous Microservices]
             end
 
-            subgraph Bridge["Virtual Bridge: k3s-br0 (10.200.0.1/24) + NAT Masquerade"]
-                subgraph StreamNS["netns: ns-worker-stream (10.200.0.2)"]
-                    WS[k3s-worker-stream<br/>workload=streaming]
-                    KONG[Kong API Gateway :30000]
-                    RP[Redpanda Kafka Broker]
-                    FLINK[Apache Flink :38081]
-                    APP_INGEST[stream-ingestor]
-                end
-
-                subgraph BatchNS["netns: ns-worker-batch (10.200.0.3)"]
-                    WB[k3s-worker-batch<br/>workload=batch]
-                    MINIO[MinIO Lakehouse S3 :9000]
-                    SETTLE[settlement-engine CronJob]
-                    SPARK[Spark Dynamic Drivers]
-                end
-            end
-
-            STORAGE[(Host Mount: /data/k3s-storage<br/>Dedicated Longhorn CSI Volume)]
+            STORAGE[(Host Mount: /data/k3s-storage<br/>k3s local-path-provisioner)]
+            Node -.->|Direct Host Volume Mounts| STORAGE
         end
     end
 ```
@@ -61,13 +52,13 @@ flowchart TD
 ### Hardware & Environment Requirements
 - **Host OS**: Windows 10/11 with WSL2 enabled.
 - **WSL Distro**: AlmaLinux-10 (Enterprise Linux 10-compatible).
-- **WSL Systemd**: Must be enabled in `/etc/wsl.conf`:
+- **WSL Systemd**: Enabled in `/etc/wsl.conf`:
   ```ini
   [boot]
   systemd=true
   ```
-- **Compute Resources**: Minimum 4 CPU cores, 8 GB RAM (16 GB recommended), 30 GB free disk space.
-- **Host Storage**: Dedicated directory `/data/k3s-storage` configured for Longhorn CSI block storage to prevent Windows drive churn.
+- **Compute Resources**: Minimum 4 CPU cores, 8 GB RAM, 20 GB free disk space.
+- **Host Storage**: Dedicated directory `/data/k3s-storage` configured for `local-path` provisioner volumes to prevent Windows drive churn.
 
 ---
 
@@ -98,54 +89,52 @@ sudo bash infra/bootstrap/install-tools.sh
 | **GNU Make** | Automation | `4.4.1` | Orchestrates repository build, test, and deploy targets. |
 | **Go Runtime** | Language | `1.26.7` | Compiles the 5 autonomous microservices in `apps/`. |
 | **uv** | Python Runtime | `0.12.10` | High-speed Python package manager for data contracts in `contracts/`. |
-| **Terraform** | IaC | `1.8.5` | Deploys substrate namespaces and Longhorn CSI in `infra/terraform/`. |
+| **Terraform** | IaC | `1.8.5` | Deploys substrate namespaces and base resources in `infra/terraform/`. |
 | **kubectl** | Kubernetes | `1.36.4` | Primary CLI for interacting with the k3s cluster. |
-| **Helm 3** | Kubernetes | `3.21.4` | Manages third-party chart releases (Longhorn, ArgoCD). |
+| **Helm 3** | Kubernetes | `3.21.4` | Manages third-party chart releases (Bank-Vaults, External Secrets). |
 | **Kustomize** | Kubernetes | `5.8.1` | Builds and validates multi-environment K8s overlays in `k8s/`. |
 | **ArgoCD CLI** | GitOps | `3.5.2` | Manages GitOps App-of-Apps synchronization and health status. |
 | **HashiCorp Vault CLI** | Security | `1.18.4` | Manages runtime secrets consumed by External Secrets Operator. |
 | **k9s** | Observability | `0.51.0` | Terminal UI for real-time cluster monitoring and pod inspection. |
 | **AWS CLI v2** | Cloud / FinOps | `2.36.40` | Tests AWS S3 interactions for the `$0.00` Free Tier cloud environment. |
-| **iSCSI Tools** (`iscsiadm`) | Storage CSI | `6.2.1.11` | **Critical**: Enables Longhorn distributed block storage volume attachment (`iscsid.service`). |
-| **Cryptsetup** | Storage CSI | `2.8.1` | Enables encryption support for Kubernetes secrets and storage volumes. |
 | **OpenSSL** | Security | `3.5.5` | Inspects certificates, generates tokens, and debugs TLS connections. |
 
 ---
 
-## 3. Step 2: Native 3-Node k3s Cluster Bootstrap
+## 3. Step 2: Single-Node k3s Cluster Bootstrap
 
-Bootstrap the native 3-node cluster directly using Linux systemd and network namespaces (no Docker or VMs):
+Bootstrap the resource-optimized single-node cluster directly using Linux systemd (no Docker or VMs):
 
 ```bash
 make host-bootstrap
 ```
 
 ### What Happens During Bootstrap:
-1. **Control Plane Initialization**:
-   - Starts `k3s-control-plane` on the WSL host network (`172.31.x.x:6443`).
+1. **Server Initialization with Production Hardening**:
+   - Starts single-node `k3s` server on the host network with node name `k3s-node`.
    - Configures etcd secrets encryption at rest via AES-CBC (`/var/lib/rancher/k3s/server/cred/encryption-config.json`).
+   - Disables default Traefik ingress (in favor of production Kong Gateway).
+   - Extends NodePort range to `30000-40000` to support all operational UIs.
    - Symlinks `/usr/bin/k3s` and `/usr/bin/kubectl` for AlmaLinux `secure_path` compatibility.
-2. **Virtual Bridge & Isolation**:
-   - Provisions bridge `k3s-br0` (`10.200.0.1/24`) with kernel IPv4 forwarding and iptables NAT masquerading.
-   - Creates network namespaces `ns-worker-stream` (`10.200.0.2`) and `ns-worker-batch` (`10.200.0.3`).
-3. **Isolated Worker Agents**:
-   - Spawns `k3s-worker-stream.service` inside `ns-worker-stream` with slice `Slice=k3sstream.slice` and label `workload=streaming`.
-   - Spawns `k3s-worker-batch.service` inside `ns-worker-batch` with slice `Slice=k3sbatch.slice` and label `workload=batch`.
-   - Isolates containerd CRI sockets and `/run/flannel` mounts via systemd `PrivateMounts=yes`.
-4. **Kubeconfig Alignment**:
-   - Copies cluster configuration to `~/.kube/config` and configures `KUBECONFIG` environment variable.
+2. **Dedicated Storage Pool Configuration**:
+   - Prepares isolated host storage pool at `/data/k3s-storage`.
+   - Configures k3s built-in `local-path-provisioner` to store all persistent volumes in `/data/k3s-storage`.
+3. **Multi-Workload Role Labeling**:
+   - Labels `k3s-node` with `control-plane`, `master`, `worker`, `streaming`, and `batch`.
+   - Ensures all manifests with `nodeSelector` (e.g. Vault requiring `control-plane`) schedule seamlessly.
+4. **Kubeconfig & Context Setup**:
+   - Configures cluster context `k3s-data-platform` in `/etc/rancher/k3s/k3s.yaml`.
+   - Automatically synchronizes kubeconfig to `~/.kube/config` and persists `KUBECONFIG` in `~/.bashrc`.
 
 ### Verify Cluster Health
 
 ```bash
-# 1. Verify all 3 nodes are Ready and labeled
-kubectl get nodes -o wide --show-labels
+# 1. Verify single-node is Ready with all roles
+kubectl get nodes -o wide
 
 # Expected Output:
-# NAME                STATUS   ROLES           AGE   VERSION        INTERNAL-IP     LABELS
-# k3s-control-plane   Ready    control-plane   ...   v1.36.4+k3s1   172.31.61.x     node-role.kubernetes.io/control-plane=true
-# k3s-worker-stream   Ready    <none>          ...   v1.36.4+k3s1   10.200.0.2      workload=streaming
-# k3s-worker-batch    Ready    <none>          ...   v1.36.4+k3s1   10.200.0.3      workload=batch
+# NAME       STATUS   ROLES                                         AGE   VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE
+# k3s-node   Ready    batch,control-plane,master,streaming,worker   ...   v1.36.4+k3s1   172.31.x.x      <none>        AlmaLinux 10.2
 
 # 2. Verify core system pods are running
 kubectl get pods -n kube-system
@@ -161,11 +150,11 @@ The platform infrastructure is partitioned into shared reusable modules (`infra/
 flowchart LR
     subgraph Terraform["infra/terraform/envs/self_manage/"]
         M1[k8s_base: Namespaces & Pod Security Standards]
-        M2[storage_longhorn: Dedicated CSI at /data/k3s-storage]
+        M2[storage_base: Local Storage Pool at /data/k3s-storage]
         M3[gitops_argo: ArgoCD Core Deployment]
     end
 
-    Terraform --> K8S[Target: Local 3-Node k3s Cluster]
+    Terraform --> K8S[Target: Local Single-Node k3s Cluster]
 ```
 
 ### Provision Local Infrastructure
@@ -192,13 +181,13 @@ make infra-plan-aws
 
 ## 5. Step 4: Deploy HashiCorp Vault & Security Operators
 
-Security infrastructure is isolated inside the dedicated `vault-system` namespace. Vault runs as a containerized StatefulSet managed by the Bank-Vaults operator, with its persistent storage backed by Longhorn (`/data/k3s-storage`).
+Security infrastructure is isolated inside the dedicated `vault-system` namespace. Vault runs as a containerized StatefulSet managed by the Bank-Vaults operator, with its persistent storage backed by `local-path` (`/data/k3s-storage`).
 
 ```mermaid
 flowchart LR
     subgraph Security["vault-system Namespace"]
         O1[Bank-Vaults Operator] -->|Manages Lifecycle & Unseal| V[Vault StatefulSet]
-        V -->|Persists Data| LH[(Longhorn CSI<br/>/data/k3s-storage)]
+        V -->|Persists Data| LP[(local-path Storage<br/>/data/k3s-storage)]
         CSS[ClusterSecretStore<br/>vault-cluster-secretstore] -->|Reads from| V
     end
 
@@ -410,58 +399,58 @@ Run `make dashboard` to view all active endpoints:
 | **API Ingress** | Kong API Gateway | `http://localhost:30000/api/v1` | Public API ingress for mobile orders and GPS pings. |
 | **GitOps Engine** | ArgoCD | `https://localhost:30443` | Continuous Delivery & App-of-Apps sync status (HTTP: 30080). |
 | **Batch DAG Engine** | Argo Workflows | `http://localhost:32746` | Daily financial settlement & reconciliation DAGs. |
-| **Distributed Storage**| Longhorn CSI | `http://localhost:30088` | Volume replication, backups, and disk allocation. |
 | **Stream Engine** | Apache Flink | `http://localhost:38081` | Real-time streaming metrics & CEP jobs. |
 | **Observability** | Grafana | `http://localhost:30300` | SRE overview, gold financial metrics, system health. |
-| **Tracing** | Jaeger | `http://localhost:31686` | Distributed transaction tracing across microservices. |
 | **Secrets Engine** | HashiCorp Vault | `http://localhost:38200` | KV v2 secrets management and audit log. |
 
 ---
 
 ## 10. Step 9: Clean Cluster Teardown & Reset
 
-To cleanly uninstall the cluster and purge virtual networks, cgroup slices, and state directories without leaving lingering artifacts on the host:
+To cleanly uninstall the cluster, terminate runtime processes, and purge storage mounts without leaving lingering host artifacts:
 
 ```bash
 make host-teardown
 ```
 
 ### Teardown Cleans Up:
-- Terminates and uninstalls all 3 k3s systemd services (`k3s`, `k3s-worker-stream`, `k3s-worker-batch`).
-- Deletes network namespaces `ns-worker-stream` and `ns-worker-batch`.
-- Tears down virtual bridge `k3s-br0` and removes iptables NAT rules.
-- Cleans up state directories (`/var/lib/rancher/k3s*`, `/var/lib/kubelet*`).
-- Removes `/usr/bin/k3s` and `/usr/bin/kubectl` symlinks.
+- Stops and disables all k3s systemd services (`k3s*.service`).
+- Safely terminates leftover container runtimes and containerd-shims.
+- Unmounts any remaining runtime, container, and kubelet mounts under `/run/k3s`, `/var/lib`, and `/data/k3s-storage`.
+- Cleans up state directories (`/var/lib/rancher`, `/run/k3s`, `/data/k3s-storage/*`).
+- Cleans up `~/.kube/config` and removes `/usr/bin/k3s` and `/usr/bin/kubectl` symlinks.
+- Automatically restores terminal TTY attributes (`stty sane`).
 
 ---
 
-## 10. Troubleshooting & SRE Runbooks
+## 11. Troubleshooting & SRE Runbooks
 
 ### Issue 1: `sudo: k3s: command not found`
 - **Cause**: AlmaLinux-10 enforces a restricted `secure_path` in `/etc/sudoers` that strips `/usr/local/bin`.
-- **Fix**: Re-run `make install-tools` or create symlinks:
+- **Fix**: Re-run `make install-tools` or re-create the symlinks:
   ```bash
   sudo ln -sf /usr/local/bin/k3s /usr/bin/k3s
   sudo ln -sf /usr/local/bin/kubectl /usr/bin/kubectl
   ```
 
-### Issue 2: Longhorn Volume Mount Stalls
-- **Cause**: The host `iscsid.service` daemon is inactive, preventing the CSI driver from attaching block volumes.
-- **Fix**: Enable and start the iSCSI daemon in WSL:
+### Issue 2: Terminal Echo Lost or Text Input Invisible
+- **Cause**: If an interactive process or sudo prompt was interrupted before restoring TTY modes, the terminal echo flag may remain disabled.
+- **Fix**: Type the following in your terminal and press Enter (it works even if the characters do not appear on screen):
   ```bash
-  sudo systemctl enable --now iscsid.service
-  sudo iscsiadm -m session
+  stty sane
   ```
 
-### Issue 3: Worker Node Pods Cannot Resolve External DNS
-- **Cause**: Missing iptables MASQUERADE rule for bridge `10.200.0.0/24` or IPv4 forwarding is disabled in WSL.
-- **Fix**: Re-apply network forwarding rules:
-  ```bash
-  sudo sysctl -w net.ipv4.ip_forward=1
-  sudo iptables -t nat -C POSTROUTING -s 10.200.0.0/24 ! -o k3s-br0 -j MASQUERADE 2>/dev/null || \
-  sudo iptables -t nat -A POSTROUTING -s 10.200.0.0/24 ! -o k3s-br0 -j MASQUERADE
+### Issue 3: Systemd Not Running as PID 1 in WSL
+- **Cause**: WSL2 was started without systemd enabled in `/etc/wsl.conf`.
+- **Fix**: Add the following to `/etc/wsl.conf` and restart WSL from PowerShell (`wsl --shutdown`):
+  ```ini
+  [boot]
+  systemd=true
   ```
 
-### Issue 4: Systemd Slice Collision on Cgroups v2
-- **Cause**: Slice names containing hyphens (`k3s-stream.slice`) designate sub-slices in cgroups v2, which fail if the parent hierarchy does not exist.
-- **Fix**: Use clean alphanumeric slice names: `Slice=k3sstream.slice` and pass `--kubelet-arg=cgroup-root=/k3sstream`.
+### Issue 4: Localhost NodePort Unreachable from Windows
+- **Cause**: WSL2 networking mode or Windows firewall blocking localhost forwarding.
+- **Fix**: Ensure the service NodePort is listening (`kubectl get svc -A`) and verify socket binding:
+  ```bash
+  ss -tulpn | grep -E '30000|30080|30443|30300'
+  ```

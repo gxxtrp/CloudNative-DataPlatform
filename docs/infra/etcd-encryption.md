@@ -52,8 +52,7 @@ Add an override:
 ExecStart=
 ExecStart=/usr/local/bin/k3s server \
   --disable=traefik \
-  --disable=local-storage \
-  --node-name=k3s-control-plane \
+  --node-name=k3s-node \
   --secrets-encryption
 ```
 

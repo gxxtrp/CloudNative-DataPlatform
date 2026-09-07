@@ -1,13 +1,13 @@
 # Observability: Full Stack Telemetry & SRE SLOs
 
 **Domain**: Platform SRE & Observability (`k8s/observability/`, `argocd/*/observability/`)  
-**Scope**: The Three Pillars (Metrics, Logs, Traces) + Alerting & Correlated SRE Dashboards  
+**Scope**: Production Metrics, Alerting Rules, SLOs, and SRE Dashboards  
 
 ---
 
-## 1. Full Observability Architecture
+## 1. Observability Architecture
 
-The observability stack is decoupled into 5 first-class platform services running in namespace `observability`:
+The observability stack runs as a lightweight, memory-efficient monitoring engine in namespace `observability`:
 
 ```mermaid
 flowchart TD
@@ -15,15 +15,11 @@ flowchart TD
         GW[Kong Ingress Gateway :8100/metrics]
         APPS[Go Workloads :8080, :8081, :8082 /metrics]
         RP[Redpanda Broker :9644/public_metrics]
-        PODS[Container stdout/stderr logs]
     end
 
     subgraph Core["Observability Engines (Namespace: observability)"]
         PROM[Prometheus TSDB :9090]
         AM[Alertmanager :9093]
-        LOKI[Loki Log Aggregator :3100]
-        PTL[Promtail DaemonSet]
-        JAEGER[Jaeger Tracing :16686 / :4317]
     end
 
     subgraph UI["SRE Visualization"]
@@ -31,11 +27,8 @@ flowchart TD
     end
 
     GW & APPS & RP -->|Scrape /metrics| PROM
-    PODS -->|Tail /var/log/pods| PTL -->|Push| LOKI
-    GW & APPS -->|OTLP Tracing| JAEGER
-
     PROM -->|Evaluate SLO Rules| AM
-    PROM & AM & LOKI & JAEGER -->|Correlated DataSources| GRAFANA
+    PROM -->|Datasource| GRAFANA
 ```
 
 ---
@@ -54,10 +47,8 @@ flowchart TD
 
 ## 3. Operational Web UIs & Endpoints
 
-| Component | UI / Endpoint | Default Port | Protocol |
-| :--- | :--- | :--- | :--- |
-| **Grafana** | `http://localhost:30300` | 30300 (NodePort) | HTTP UI |
-| **Jaeger Tracing** | `http://localhost:31686` | 31686 (NodePort) | HTTP UI |
-| **Prometheus TSDB**| `http://localhost:9090` | 9090 (ClusterIP) | HTTP / Web |
-| **Alertmanager** | `http://localhost:9093` | 9093 (ClusterIP) | HTTP / Web |
-| **Loki API** | `http://localhost:3100` | 3100 (ClusterIP) | HTTP REST |
+| Component | UI / Endpoint | Default Port | Protocol | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Grafana** | `http://localhost:30300` | 30300 (NodePort) | HTTP UI | SRE metrics, operational dashboards, and SLO monitoring |
+| **Prometheus TSDB**| `http://localhost:9090` | 9090 (ClusterIP) | HTTP Web | Raw TSDB queries, scrape targets, and alert evaluation |
+| **Alertmanager** | `http://localhost:9093` | 9093 (ClusterIP) | HTTP Web | Notification routing and alert deduplication |
