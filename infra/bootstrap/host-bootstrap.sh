@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # ==============================================================================
 # Cloud-Native Data Platform - 3-Node k3s Host Bootstrap Script
 # Target Host OS: WSL2 (AlmaLinux-10) or Bare-Metal Enterprise Linux
@@ -14,9 +14,9 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
-log_ok() { echo -e "${GREEN}[OK]${NC} $1"; }
+log_ok()   { echo -e "${GREEN}[OK]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_err() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_err()  { echo -e "${RED}[ERROR]${NC} $1"; }
 
 echo "========================================================================"
 echo "  Cloud-Native Data Platform: 3-Node k3s Cluster Bootstrap"
@@ -39,12 +39,30 @@ sudo chmod 777 /data/k3s-storage
 log_ok "Isolated storage pool prepared at /data/k3s-storage."
 
 # 3. Install k3s control plane (server) if not installed
+#
+# --secrets-encryption: Enables AES-GCM encryption of Kubernetes Secret objects
+# at rest in the datastore (SQLite). Required so that vault-unseal-keys and other
+# K8s Secrets are not stored plaintext on disk.
+# Key file: /var/lib/rancher/k3s/server/cred/encryption-config.json
+#
 if ! command -v k3s &> /dev/null; then
-    log_info "Installing k3s server (control-plane)..."
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --disable=traefik --disable=local-storage --node-name=k3s-control-plane" sh -
-    log_ok "k3s server installed."
+    log_info "Installing k3s server (control-plane) with secrets encryption enabled..."
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
+      --disable=traefik \
+      --disable=local-storage \
+      --node-name=k3s-control-plane \
+      --secrets-encryption" sh -
+    log_ok "k3s server installed with secrets encryption."
 else
     log_info "k3s binary already installed. Ensuring k3s service is active..."
+    if sudo grep -qr "secrets-encryption" /etc/rancher/k3s/ 2>/dev/null || \
+       sudo test -f /var/lib/rancher/k3s/server/cred/encryption-config.json; then
+        log_ok "Secrets encryption already active."
+    else
+        log_warn "Secrets encryption NOT active on existing cluster."
+        log_warn "To enable on an existing cluster, see: docs/infra/etcd-encryption.md"
+        log_warn "Proceeding without modifying existing installation."
+    fi
     sudo systemctl restart k3s
 fi
 
@@ -60,7 +78,7 @@ NODE_TOKEN=$(sudo cat /var/lib/rancher/k3s/server/node-token)
 
 # 5. Configure Worker 1: k3s-worker-stream (Streaming Workload Node)
 log_info "Configuring k3s-worker-stream agent service..."
-sudo bash -c "cat <<EOF > /etc/systemd/system/k3s-worker-stream.service
+sudo bash -c "cat <<'SYSTEMD' > /etc/systemd/system/k3s-worker-stream.service
 [Unit]
 Description=k3s-worker-stream agent
 After=network.target k3s.service
@@ -74,11 +92,11 @@ LimitNOFILE=1048576
 
 [Install]
 WantedBy=multi-user.target
-EOF"
+SYSTEMD"
 
 # 6. Configure Worker 2: k3s-worker-batch (Batch Workload Node)
 log_info "Configuring k3s-worker-batch agent service..."
-sudo bash -c "cat <<EOF > /etc/systemd/system/k3s-worker-batch.service
+sudo bash -c "cat <<'SYSTEMD' > /etc/systemd/system/k3s-worker-batch.service
 [Unit]
 Description=k3s-worker-batch agent
 After=network.target k3s.service
@@ -92,7 +110,7 @@ LimitNOFILE=1048576
 
 [Install]
 WantedBy=multi-user.target
-EOF"
+SYSTEMD"
 
 # Enable and start agent services
 sudo systemctl daemon-reload
@@ -117,6 +135,18 @@ for i in {1..30}; do
     sleep 3
 done
 
+# 9. Verify secrets encryption is active
+log_info "Verifying secrets encryption at rest..."
+ENCRYPTION_CONFIG="/var/lib/rancher/k3s/server/cred/encryption-config.json"
+if sudo test -f "$ENCRYPTION_CONFIG"; then
+    PROVIDER=$(sudo cat "$ENCRYPTION_CONFIG" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
+    log_ok "Secrets encryption active. Provider: ${PROVIDER:-aescbc/aesgcm}"
+    log_ok "Encryption config: ${ENCRYPTION_CONFIG}"
+else
+    log_warn "Encryption config not found at ${ENCRYPTION_CONFIG}."
+    log_warn "Secrets may not be encrypted at rest. See: docs/infra/etcd-encryption.md"
+fi
+
 echo ""
 log_ok "3-Node cluster successfully bootstrapped!"
 sudo k3s kubectl get nodes -o wide --show-labels
@@ -126,4 +156,5 @@ echo "  Control Plane: k3s-control-plane"
 echo "  Worker 1:      k3s-worker-stream  (Label: workload=streaming)"
 echo "  Worker 2:      k3s-worker-batch   (Label: workload=batch)"
 echo "  Storage Pool:  /data/k3s-storage"
+echo "  Encryption:    Kubernetes Secrets encrypted at rest (AES-GCM)"
 echo "========================================================================"
