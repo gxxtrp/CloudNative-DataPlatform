@@ -19,7 +19,7 @@ RUN_WSL := wsl -d $(WSL_DISTRO) -e
 RUN_WSL_ROOT := wsl -d $(WSL_DISTRO) -u root -e
 endif
 
-.PHONY: help install-tools host-bootstrap host-bootstrap-single host-bootstrap-3node host-teardown infra-init infra-plan infra-apply infra-destroy \
+.PHONY: help install-tools host-bootstrap host-bootstrap-single host-teardown infra-init infra-plan infra-apply infra-destroy \
         test-contracts test-streaming test-dlq test-compaction run-batch verify dashboard test
 
 help: ## Show this help message
@@ -41,11 +41,7 @@ host-bootstrap: ## Bootstrap single-node k3s cluster in WSL2 (AlmaLinux-10)
 	@echo "[+] Starting single-node k3s bootstrap in WSL2..."
 	$(RUN_WSL) bash infra/bootstrap/host-bootstrap-single.sh
 
-host-bootstrap-3node: ## Bootstrap legacy 3-node k3s cluster (archived, high memory usage)
-	@echo "[WARN] 3-node bootstrap is archived. Requires ~3.8GB+ RAM baseline."
-	$(RUN_WSL) bash infra/bootstrap/host-bootstrap-3node-archived.sh
-
-host-teardown: ## Teardown k3s cluster in WSL2 (works for both single and 3-node)
+host-teardown: ## Teardown k3s cluster in WSL2
 	@echo "[+] Tearing down k3s cluster in WSL2..."
 	$(RUN_WSL) bash infra/bootstrap/host-teardown.sh
 

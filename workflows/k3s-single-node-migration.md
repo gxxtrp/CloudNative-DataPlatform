@@ -1,4 +1,4 @@
-﻿# Workflow: Migrate from 3-Node k3s to Single-Node k3s
+# Workflow: Migrate from 3-Node k3s to Single-Node k3s
 
 ## Problem Statement
 
@@ -258,8 +258,8 @@ Update these files to reflect the new architecture:
 - Section 8 "Host Bootstrap": update to describe single-node k3s with no netns workers
 
 ### infra/bootstrap/ changes
-- Create host-bootstrap-single.sh (new canonical single-node bootstrap)
-- Keep host-bootstrap.sh as archive reference (rename to host-bootstrap-3node-archived.sh)
+- Create host-bootstrap-single.sh (canonical single-node bootstrap)
+- Retired legacy 3-node bootstrap and virtual netns bridge scripts
 
 ---
 

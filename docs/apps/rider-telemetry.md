@@ -5,7 +5,7 @@
 
 > [!NOTE]
 > **Implementation Status: Architectural Simulation & Contract Specification**  
-> The runtime service in `apps/rider-service` is currently implemented as an **architectural prototype / in-memory simulation**. It provides live HTTP endpoints (`/v1/riders/telemetry`, `/v1/riders/{id}/status`), Prometheus metrics, and in-memory outbox queuing. Wire-level Redpanda streaming and Apache Flink geospatial streaming represent target production architectures specified by our formal Data Contract ([`contracts/schemas/riders/riders.telemetry.v1.json`](../../contracts/schemas/riders/riders.telemetry.v1.json)).
+> The runtime service in `apps/rider-service` is currently implemented as an **architectural prototype / in-memory simulation**. It provides live HTTP endpoints (`/v1/riders/telemetry`, `/v1/riders/{id}/status`), Prometheus metrics, and in-memory outbox queuing. Wire-level Redpanda streaming and Apache Flink geospatial streaming represent target production architectures specified by the formal Data Contract ([`contracts/schemas/riders/riders.telemetry.v1.json`](../../contracts/schemas/riders/riders.telemetry.v1.json)).
 
 ---
 

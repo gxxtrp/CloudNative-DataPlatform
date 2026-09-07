@@ -41,7 +41,7 @@ func main() {
 	log.Printf("[SETTLEMENT_ENGINE] Starting daily financial batch reconciliation for date: %s", *settleDate)
 
 	// In real-world execution, reads S3 Bronze Parquet files for the date.
-	// We simulate a realistic two-sided ledger of completed merchant orders and payment gateway transactions:
+	// Simulates a realistic two-sided ledger of completed merchant orders and payment gateway transactions:
 	orders := []struct {
 		OrderID    string
 		MerchantID string

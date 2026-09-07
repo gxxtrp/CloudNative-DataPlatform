@@ -69,9 +69,9 @@ The repository provides an automated, idempotent setup script that installs all 
 ### Run the Installer
 
 > [!TIP]
-> **Terminal Environment:** All `make` targets and workflows are designed to be executed **inside your WSL terminal** (`wsl` in PowerShell). All developer tools (`make`, `terraform`, `kubectl`, `helm`, `uv`, `go`) run natively inside AlmaLinux-10.
+> **Terminal Environment:** All `make` targets and workflows are designed to be executed **inside an active WSL terminal** (`wsl` in PowerShell). All developer tools (`make`, `terraform`, `kubectl`, `helm`, `uv`, `go`) run natively inside AlmaLinux-10.
 
-Inside your WSL terminal, run:
+From the WSL terminal, execute:
 
 ```bash
 make install-tools
@@ -321,7 +321,7 @@ vault kv get secret/apps/order-service
 ## 7. Step 6: (Optional) Local Validation & Contract Linting
 
 > [!NOTE]
-> **CI/CD Automation:** In standard GitOps operations, **you do not need to build images locally**. The GitHub Actions CI/CD pipeline ([.github/workflows/cd-build.yaml](file:///c:/Users/x/work/data-platfrom/.github/workflows/cd-build.yaml)) automatically compiles Go binaries, builds distroless container images, and pushes them to `ghcr.io` upon every push to `main`.
+> **CI/CD Automation:** In standard GitOps operations, **building container images locally is unnecessary**. The GitHub Actions CI/CD pipeline ([.github/workflows/cd-build.yaml](file:///c:/Users/x/work/data-platfrom/.github/workflows/cd-build.yaml)) automatically compiles Go binaries, builds distroless container images, and pushes them to `ghcr.io` upon every push to `main`.
 > 
 > The commands below are **local developer convenience targets** used to test schema changes and verify syntax locally before committing:
 
@@ -435,7 +435,7 @@ make host-teardown
 
 ### Issue 2: Terminal Echo Lost or Text Input Invisible
 - **Cause**: If an interactive process or sudo prompt was interrupted before restoring TTY modes, the terminal echo flag may remain disabled.
-- **Fix**: Type the following in your terminal and press Enter (it works even if the characters do not appear on screen):
+- **Fix**: Execute the following command in the terminal and press Enter (the shell will accept input even if characters are not displayed on screen):
   ```bash
   stty sane
   ```

@@ -17,7 +17,7 @@ When the flag is passed at server start, k3s:
 
 > [!IMPORTANT]
 > Existing Secrets written *before* enabling encryption remain plaintext until
-> you run a rewrite (Step 3 of the migration below).
+> a rewrite is executed (Step 3 of the migration below).
 
 ---
 
@@ -110,8 +110,8 @@ sudo k3s secrets-encrypt status
 | `/var/lib/rancher/k3s/server/db/state.db` | SQLite datastore (encrypted content) |
 
 > [!CAUTION]
-> If you lose `encryption-config.json`, all encrypted Secrets are permanently unrecoverable.
-> Back up this file to a secure location (e.g., HCP Vault, offline storage) after each key rotation.
+> If `encryption-config.json` is lost, all encrypted Secrets become permanently unrecoverable.
+> Administrators should back up this file to a secure location (e.g., HCP Vault, offline storage) after each key rotation.
 
 ---
 
