@@ -1,4 +1,4 @@
-name: Build App
+name: "CD: Build & Push Container Images"
 
 on:
   push:
@@ -6,6 +6,19 @@ on:
     paths:
       - 'apps/**'
   workflow_dispatch:
+    inputs:
+      app:
+        description: 'Microservice to build (all or specific app)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - order-service
+          - rider-service
+          - stream-ingestor
+          - settlement-engine
+          - traffic-generator
 
 concurrency:
   group: publish-images-${{ github.ref }}
@@ -23,11 +36,8 @@ jobs:
     name: Detect Changed Microservices
     runs-on: ubuntu-latest
     outputs:
-      order-service: ${{ steps.filter.outputs.order-service }}
-      rider-service: ${{ steps.filter.outputs.rider-service }}
-      stream-ingestor: ${{ steps.filter.outputs.stream-ingestor }}
-      settlement-engine: ${{ steps.filter.outputs.settlement-engine }}
-      traffic-generator: ${{ steps.filter.outputs.traffic-generator }}
+      apps: ${{ steps.set-matrix.outputs.apps }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -48,23 +58,42 @@ jobs:
             traffic-generator:
               - 'apps/traffic-generator/**'
 
+      - name: Determine Target Apps Matrix
+        id: set-matrix
+        env:
+          CHANGED_APPS: ${{ steps.filter.outputs.changes }}
+          DISPATCH_APP: ${{ inputs.app }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -z "$DISPATCH_APP" ] || [ "$DISPATCH_APP" = "all" ]; then
+              echo 'apps=["order-service", "rider-service", "stream-ingestor", "settlement-engine", "traffic-generator"]' >> "$GITHUB_OUTPUT"
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "apps=[\"$DISPATCH_APP\"]" >> "$GITHUB_OUTPUT"
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            if [ "$CHANGED_APPS" != "[]" ] && [ -n "$CHANGED_APPS" ]; then
+              echo "apps=$CHANGED_APPS" >> "$GITHUB_OUTPUT"
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            else
+              echo 'apps=[]' >> "$GITHUB_OUTPUT"
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   # ----------------------------------------------------------------------------
   # 2. Multi-Stage Distroless Build & Push to ghcr.io
   # ----------------------------------------------------------------------------
   build-and-push:
     name: Build & Push (${{ matrix.app }})
     needs: detect-apps
+    if: ${{ needs.detect-apps.outputs.has_changes == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        app:
-          - order-service
-          - rider-service
-          - stream-ingestor
-          - settlement-engine
-          - traffic-generator
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-apps.outputs[matrix.app] == 'true' }}
+        app: ${{ fromJSON(needs.detect-apps.outputs.apps) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
