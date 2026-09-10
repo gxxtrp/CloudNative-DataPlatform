@@ -151,8 +151,10 @@ resource "google_sql_provision_script" "publisher_schemas" {
   description = "Create isolated publisher schemas and runtime privileges"
   script      = <<-SQL
     REVOKE ALL ON SCHEMA public FROM PUBLIC;
-    CREATE SCHEMA IF NOT EXISTS order_service AUTHORIZATION "${local.publisher_database_users.order}";
-    CREATE SCHEMA IF NOT EXISTS rider_service AUTHORIZATION "${local.publisher_database_users.rider}";
+    -- The Terraform operator owns the schemas. A Cloud SQL IAM database
+    -- administrator cannot transfer ownership to an unrelated IAM role.
+    CREATE SCHEMA IF NOT EXISTS order_service;
+    CREATE SCHEMA IF NOT EXISTS rider_service;
     GRANT CONNECT ON DATABASE ${google_sql_database.workload.name} TO "${local.publisher_database_users.order}", "${local.publisher_database_users.rider}";
     GRANT USAGE, CREATE ON SCHEMA order_service TO "${local.publisher_database_users.order}";
     GRANT USAGE, CREATE ON SCHEMA rider_service TO "${local.publisher_database_users.rider}";
