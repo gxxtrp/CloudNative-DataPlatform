@@ -1,6 +1,0 @@
-dataplatform_project_id    = "your-dataplatform-project"
-region                     = "asia-southeast1"
-environment                = "poc"
-raw_retention_days         = 90
-quarantine_retention_days  = 30
-transient_retention_days   = 14

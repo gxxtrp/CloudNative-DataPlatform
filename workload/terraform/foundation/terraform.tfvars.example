@@ -1,7 +1,0 @@
-workload_project_id          = "your-workload-project"
-workload_project_number      = "123456789012"
-dataplatform_project_number  = "123456789012"
-region                       = "asia-southeast1"
-github_repository            = "gxxtrp/CloudNative-DataPlatform"
-private_connectivity_only    = true
-synthetic_data_only          = true

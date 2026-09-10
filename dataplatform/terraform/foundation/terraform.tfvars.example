@@ -1,7 +1,0 @@
-dataplatform_project_id     = "your-dataplatform-project"
-dataplatform_project_number = "123456789012"
-region                      = "asia-southeast1"
-platform_owner_email        = "owner@example.com"
-github_repository           = "gxxtrp/CloudNative-DataPlatform"
-private_connectivity_only   = true
-synthetic_data_only         = true

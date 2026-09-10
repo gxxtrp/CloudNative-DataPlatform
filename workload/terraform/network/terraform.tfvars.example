@@ -1,4 +1,0 @@
-workload_project_id = "your-workload-project"
-region              = "asia-southeast1"
-environment         = "poc"
-subnet_cidr         = "10.20.0.0/24"
