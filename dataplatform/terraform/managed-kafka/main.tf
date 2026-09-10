@@ -5,8 +5,6 @@ locals {
     "subnetworks", var.workload_kafka_subnet_name,
   ])
 
-  kafka_service_agent = "service-${var.dataplatform_project_number}@gcp-sa-managedkafka.iam.gserviceaccount.com"
-
   publisher_principals = [
     "User:order-publisher@${var.workload_project_id}.iam.gserviceaccount.com",
     "User:rider-publisher@${var.workload_project_id}.iam.gserviceaccount.com",
@@ -20,13 +18,22 @@ locals {
   topics = toset(keys(local.topic_publishers))
 }
 
+# Enabling an API does not always materialize its Google-managed identity until
+# the first API call. Generate it before the cross-project IAM grant, otherwise
+# the grant can race the service-agent creation.
+resource "google_project_service_identity" "managed_kafka" {
+  provider = google-beta
+  project  = var.dataplatform_project_id
+  service  = "managedkafka.googleapis.com"
+}
+
 # The cluster's Google-managed agent can create Kafka PSC endpoints and private
 # DNS entries only in the designated Workload subnet. No broad project access
 # or Shared VPC is used.
 resource "google_project_iam_member" "kafka_service_agent_workload_network" {
   project = var.workload_project_id
   role    = "roles/managedkafka.serviceAgent"
-  member  = "serviceAccount:${local.kafka_service_agent}"
+  member  = google_project_service_identity.managed_kafka.member
 }
 
 resource "google_managed_kafka_cluster" "delivery" {
