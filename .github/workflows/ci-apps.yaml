@@ -1,0 +1,50 @@
+name: "CI: Domain Applications"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workload/apps/**'
+      - '.github/workflows/ci-apps.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'workload/apps/**'
+      - '.github/workflows/ci-apps.yaml'
+
+concurrency:
+  group: ci-apps-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  apps-ci:
+    name: Go Apps Validation (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - order-service
+          - rider-service
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go Runtime
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache: false
+
+      - name: Verify Code & Build Binary
+        working-directory: workload/apps/${{ matrix.app }}
+        run: |
+          echo "==> Running go vet..."
+          go vet ./...
+          echo "==> Running go test..."
+          go test -v ./...
+          echo "==> Compiling static binary..."
+          CGO_ENABLED=0 go build -v -ldflags="-w -s" -o /dev/null .

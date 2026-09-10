@@ -1,0 +1,8 @@
+workload_project_id     = "your-workload-project"
+region                  = "asia-southeast1"
+network_name            = "workload-private"
+subnetwork_name         = "workload-run"
+order_image             = "asia-southeast1-docker.pkg.dev/your-workload-project/delivery-workload/order-service:git-sha"
+rider_image             = "asia-southeast1-docker.pkg.dev/your-workload-project/delivery-workload/rider-service:git-sha"
+kafka_bootstrap_servers = "bootstrap.example.managedkafka.your-dataplatform-project.cloud.goog:9092"
+deletion_protection     = true

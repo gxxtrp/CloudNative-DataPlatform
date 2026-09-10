@@ -1,0 +1,9 @@
+dataplatform_project_id      = "your-dataplatform-project"
+dataplatform_project_number  = "123456789012"
+workload_project_id          = "your-workload-project"
+region                       = "asia-southeast1"
+workload_kafka_subnet_name   = "workload-run"
+cluster_id                   = "delivery-poc"
+vcpu_count                   = 3
+memory_bytes                 = 3221225472
+topic_retention_ms           = 604800000

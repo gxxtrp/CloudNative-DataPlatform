@@ -1,0 +1,44 @@
+name: "CI: Data Contracts & Governance"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/ci-contracts.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/ci-contracts.yaml'
+
+concurrency:
+  group: ci-contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  contracts-gate:
+    name: Contracts & Python Quality Gates
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup uv Package Manager
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "contracts/uv.lock"
+
+      - name: Run Schema Compatibility Gatekeeper
+        run: uv run python linter.py
+
+      - name: Run Pytest Quality Suite
+        run: uv run --extra dev pytest -v tests

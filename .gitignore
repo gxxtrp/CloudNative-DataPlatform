@@ -1,0 +1,41 @@
+# Virtual environment
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local data & lakehouse partitions
+data/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+!dataplatform/terraform/foundation/.terraform.lock.hcl
+!dataplatform/terraform/managed-data/.terraform.lock.hcl
+!dataplatform/terraform/managed-kafka/.terraform.lock.hcl
+!workload/terraform/foundation/.terraform.lock.hcl
+!workload/terraform/network/.terraform.lock.hcl
+!workload/terraform/cloud-sql/.terraform.lock.hcl
+!workload/terraform/artifact-registry/.terraform.lock.hcl
+!workload/terraform/cloud-run/.terraform.lock.hcl
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
