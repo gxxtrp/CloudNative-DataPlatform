@@ -1,0 +1,40 @@
+# CronWorkflow for daily trips ETL
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: trips-daily-etl
+  namespace: orchestration
+  labels:
+    domain: trips
+    schedule: daily
+spec:
+  # Run at 2 AM UTC every day
+  schedule: "0 2 * * *"
+  
+  # Timezone
+  timezone: "UTC"
+  
+  # Concurrency policy
+  concurrencyPolicy: "Replace"
+  
+  # Keep last 5 successful and 3 failed runs
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  
+  # Suspend if needed
+  suspend: false
+  
+  workflowSpec:
+    entrypoint: trips-daily-pipeline
+    
+    arguments:
+      parameters:
+        - name: execution-date
+          value: "{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}"
+        - name: project-id
+          value: "dataplatform-dev"
+        - name: lake-bucket
+          value: "dataplatform-dev-lake"
+    
+    workflowTemplateRef:
+      name: trips-daily-etl

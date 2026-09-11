@@ -1,0 +1,92 @@
+# Daily ETL workflow for Trips domain
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: trips-daily-etl-
+  namespace: orchestration
+  labels:
+    domain: trips
+    pipeline: daily-etl
+spec:
+  entrypoint: trips-daily-pipeline
+  
+  arguments:
+    parameters:
+      - name: execution-date
+        value: "{{workflow.creationTimestamp.Y}}-{{workflow.creationTimestamp.m}}-{{workflow.creationTimestamp.d}}"
+      - name: project-id
+        value: "dataplatform-dev"
+      - name: lake-bucket
+        value: "dataplatform-dev-lake"
+  
+  templates:
+    - name: trips-daily-pipeline
+      dag:
+        tasks:
+          # Step 1: Bronze to Silver (Spark)
+          - name: bronze-to-silver
+            templateRef:
+              name: spark-job
+              template: submit-spark-job
+            arguments:
+              parameters:
+                - name: job-name
+                  value: "trips-bronze-to-silver"
+                - name: main-application-file
+                  value: "gs://{{workflow.parameters.lake-bucket}}/artifacts/trips/bronze_to_silver.py"
+                - name: executor-instances
+                  value: "3"
+                - name: arguments
+                  value: '["--date", "{{workflow.parameters.execution-date}}"]'
+          
+          # Step 2: DBT Silver to Gold (depends on bronze-to-silver)
+          - name: dbt-silver-to-gold
+            templateRef:
+              name: dbt-run
+              template: dbt-workflow
+            arguments:
+              parameters:
+                - name: dbt-command
+                  value: "run"
+                - name: dbt-select
+                  value: "tag:trips"
+                - name: dbt-target
+                  value: "dev"
+            dependencies:
+              - bronze-to-silver
+          
+          # Step 3: Data quality checks (depends on dbt)
+          - name: data-quality
+            templateRef:
+              name: dbt-run
+              template: dbt-execute
+            arguments:
+              parameters:
+                - name: command
+                  value: "test"
+            dependencies:
+              - dbt-silver-to-gold
+          
+          # Step 4: Update OpenMetadata (depends on quality)
+          - name: update-catalog
+            template: update-openmetadata
+            dependencies:
+              - data-quality
+    
+    - name: update-openmetadata
+      container:
+        image: "us-central1-docker.pkg.dev/{{workflow.parameters.project-id}}/data-platform/openmetadata-ingestion:latest"
+        command: ["python"]
+        args:
+          - "-m"
+          - "metadata"
+          - "ingest"
+          - "-c"
+          - "/config/bigquery_ingestion.yaml"
+        volumeMounts:
+          - name: ingestion-config
+            mountPath: /config
+      volumes:
+        - name: ingestion-config
+          configMap:
+            name: openmetadata-ingestion-config

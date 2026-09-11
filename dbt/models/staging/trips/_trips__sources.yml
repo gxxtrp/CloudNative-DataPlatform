@@ -1,0 +1,50 @@
+# Source definitions for trips domain
+version: 2
+
+sources:
+  - name: silver
+    description: "Silver layer - cleaned and deduplicated data from Iceberg tables via BigLake"
+    database: "{{ var('project_id', 'dataplatform-dev') }}"
+    schema: silver
+    
+    tables:
+      - name: trips
+        description: "Trip records from CDC"
+        external:
+          location: "gs://{{ var('lake_bucket') }}/silver/trips"
+          options:
+            format: ICEBERG
+            metadata_cache_mode: AUTOMATIC
+        
+        columns:
+          - name: trip_id
+            description: "Unique trip identifier"
+            tests:
+              - unique
+              - not_null
+          
+          - name: rider_id
+            description: "User ID of the rider"
+            tests:
+              - not_null
+          
+          - name: driver_id
+            description: "User ID of the driver (null if not matched)"
+          
+          - name: status
+            description: "Trip status"
+            tests:
+              - accepted_values:
+                  values: ['REQUESTED', 'MATCHED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+          
+          - name: fare_usd
+            description: "Total fare in USD"
+            tests:
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: 0
+                  max_value: 10000
+          
+          - name: requested_at
+            description: "Timestamp when ride was requested"
+            tests:
+              - not_null

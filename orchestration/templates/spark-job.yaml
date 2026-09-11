@@ -1,0 +1,85 @@
+# Argo Workflow Template for Spark jobs
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: spark-job
+  namespace: orchestration
+spec:
+  entrypoint: submit-spark-job
+  
+  arguments:
+    parameters:
+      - name: job-name
+      - name: main-class
+        value: ""
+      - name: main-application-file
+      - name: spark-version
+        value: "3.5.0"
+      - name: driver-cores
+        value: "1"
+      - name: driver-memory
+        value: "2g"
+      - name: executor-instances
+        value: "2"
+      - name: executor-cores
+        value: "2"
+      - name: executor-memory
+        value: "4g"
+      - name: arguments
+        value: "[]"
+  
+  templates:
+    - name: submit-spark-job
+      resource:
+        action: create
+        setOwnerReference: true
+        successCondition: status.applicationState.state == COMPLETED
+        failureCondition: status.applicationState.state == FAILED
+        manifest: |
+          apiVersion: sparkoperator.k8s.io/v1beta2
+          kind: SparkApplication
+          metadata:
+            name: "{{workflow.parameters.job-name}}-{{workflow.uid}}"
+            namespace: batch
+          spec:
+            type: Python
+            pythonVersion: "3"
+            mode: cluster
+            image: "us-central1-docker.pkg.dev/{{workflow.parameters.project-id}}/data-platform/spark:{{workflow.parameters.spark-version}}"
+            imagePullPolicy: IfNotPresent
+            mainApplicationFile: "{{workflow.parameters.main-application-file}}"
+            mainClass: "{{workflow.parameters.main-class}}"
+            arguments: {{workflow.parameters.arguments}}
+            sparkVersion: "{{workflow.parameters.spark-version}}"
+            
+            sparkConf:
+              "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
+              "spark.sql.catalog.iceberg": "org.apache.iceberg.spark.SparkCatalog"
+              "spark.sql.catalog.iceberg.type": "hadoop"
+              "spark.sql.catalog.iceberg.warehouse": "gs://{{workflow.parameters.lake-bucket}}"
+              "spark.hadoop.fs.gs.impl": "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem"
+            
+            hadoopConf:
+              "fs.gs.project.id": "{{workflow.parameters.project-id}}"
+              "fs.gs.auth.service.account.enable": "true"
+            
+            driver:
+              cores: {{workflow.parameters.driver-cores}}
+              memory: "{{workflow.parameters.driver-memory}}"
+              serviceAccount: spark
+              labels:
+                version: "{{workflow.parameters.spark-version}}"
+            
+            executor:
+              cores: {{workflow.parameters.executor-cores}}
+              instances: {{workflow.parameters.executor-instances}}
+              memory: "{{workflow.parameters.executor-memory}}"
+              labels:
+                version: "{{workflow.parameters.spark-version}}"
+            
+            restartPolicy:
+              type: OnFailure
+              onFailureRetries: 2
+              onFailureRetryInterval: 30
+              onSubmissionFailureRetries: 2
+              onSubmissionFailureRetryInterval: 30

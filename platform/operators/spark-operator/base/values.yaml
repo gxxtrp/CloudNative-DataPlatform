@@ -1,0 +1,33 @@
+# Spark Operator Helm Values
+image:
+  repository: ghcr.io/kubeflow/spark-operator
+  tag: 2.0.0
+
+controller:
+  workers: 2
+
+webhook:
+  enable: true
+  port: 8080
+
+metrics:
+  enable: true
+  port: 8090
+  portName: metrics
+
+serviceAccounts:
+  spark:
+    create: true
+    name: spark
+
+sparkJobNamespaces:
+  - batch
+
+# Resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi

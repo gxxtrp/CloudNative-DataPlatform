@@ -1,0 +1,77 @@
+# Argo Workflow Template for DBT runs
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: dbt-run
+  namespace: orchestration
+spec:
+  entrypoint: dbt-workflow
+  
+  arguments:
+    parameters:
+      - name: dbt-command
+        value: "run"
+      - name: dbt-select
+        value: ""
+      - name: dbt-target
+        value: "dev"
+      - name: image-tag
+        value: "latest"
+  
+  templates:
+    - name: dbt-workflow
+      steps:
+        - - name: dbt-deps
+            template: dbt-execute
+            arguments:
+              parameters:
+                - name: command
+                  value: "deps"
+        
+        - - name: dbt-run
+            template: dbt-execute
+            arguments:
+              parameters:
+                - name: command
+                  value: "{{workflow.parameters.dbt-command}}"
+        
+        - - name: dbt-test
+            template: dbt-execute
+            arguments:
+              parameters:
+                - name: command
+                  value: "test"
+            when: "{{workflow.parameters.dbt-command}} == 'run'"
+    
+    - name: dbt-execute
+      inputs:
+        parameters:
+          - name: command
+      container:
+        image: "us-central1-docker.pkg.dev/{{workflow.parameters.project-id}}/data-platform/dbt:{{workflow.parameters.image-tag}}"
+        command: ["dbt"]
+        args:
+          - "{{inputs.parameters.command}}"
+          - "--target"
+          - "{{workflow.parameters.dbt-target}}"
+          - "--select"
+          - "{{workflow.parameters.dbt-select}}"
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/key.json
+        volumeMounts:
+          - name: gcp-credentials
+            mountPath: /var/secrets/google
+            readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+      
+      volumes:
+        - name: gcp-credentials
+          secret:
+            secretName: gcp-credentials

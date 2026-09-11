@@ -1,0 +1,12 @@
+# Terraform module sources
+# https://terraspace.cloud/docs/terrafile/
+
+# Google Cloud modules
+mod "vpc", source: "terraform-google-modules/network/google", version: "~> 9.0"
+mod "gke", source: "terraform-google-modules/kubernetes-engine/google", version: "~> 31.0"
+mod "cloud-nat", source: "terraform-google-modules/cloud-nat/google", version: "~> 5.0"
+mod "pubsub", source: "terraform-google-modules/pubsub/google", version: "~> 6.0"
+mod "bigquery", source: "terraform-google-modules/bigquery/google", version: "~> 7.0"
+mod "cloud-storage", source: "terraform-google-modules/cloud-storage/google", version: "~> 6.0"
+mod "service-accounts", source: "terraform-google-modules/service-accounts/google", version: "~> 4.0"
+mod "secret-manager", source: "GoogleCloudPlatform/secret-manager/google", version: "~> 0.4"

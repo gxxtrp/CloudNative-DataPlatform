@@ -1,0 +1,8 @@
+# Terraspace dependencies
+source "https://rubygems.org"
+
+gem "terraspace", "~> 2.2"
+gem "rspec-terraspace"
+
+# Terraspace plugins
+gem "terraspace_plugin_google"

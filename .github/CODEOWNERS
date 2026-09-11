@@ -1,0 +1,81 @@
+# CODEOWNERS - Defines code ownership for PR reviews
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ============================================================================
+# PLATFORM TEAM - Infrastructure and platform services
+# ============================================================================
+
+# All infrastructure (Terraspace)
+/infrastructure/ @platform-team
+
+# Platform services (operators, monitoring, catalog)
+/platform/ @platform-team
+
+# Base Docker images
+/images/*-base/ @platform-team
+
+# Workflow templates (shared patterns)
+/orchestration/templates/ @platform-team
+
+# CI/CD workflows for infrastructure and platform
+/.github/workflows/infrastructure.yaml @platform-team
+/.github/workflows/platform.yaml @platform-team
+/.github/workflows/images.yaml @platform-team
+
+# Repository configuration
+/.github/CODEOWNERS @platform-team
+/.pre-commit-config.yaml @platform-team
+
+# ============================================================================
+# DOMAIN TEAMS - Data pipelines and transforms
+# ============================================================================
+
+# TRIPS DOMAIN
+/pipelines/domains/trips/ @trips-team
+/dbt/models/staging/trips/ @trips-team
+/dbt/models/intermediate/trips/ @trips-team
+/dbt/models/marts/trips/ @trips-team
+/orchestration/workflows/trips/ @trips-team
+/orchestration/cron/trips*.yaml @trips-team
+/.github/workflows/pipelines-trips.yaml @trips-team
+
+# PAYMENTS DOMAIN
+/pipelines/domains/payments/ @payments-team
+/dbt/models/staging/payments/ @payments-team
+/dbt/models/intermediate/payments/ @payments-team
+/dbt/models/marts/payments/ @payments-team
+/orchestration/workflows/payments/ @payments-team
+/orchestration/cron/payments*.yaml @payments-team
+/.github/workflows/pipelines-payments.yaml @payments-team
+
+# USERS DOMAIN
+/pipelines/domains/users/ @users-team
+/dbt/models/staging/users/ @users-team
+/dbt/models/intermediate/users/ @users-team
+/dbt/models/marts/users/ @users-team
+/orchestration/workflows/users/ @users-team
+/.github/workflows/pipelines-users.yaml @users-team
+
+# ============================================================================
+# SHARED - Requires platform team review
+# ============================================================================
+
+# Shared pipeline utilities
+/pipelines/shared/ @platform-team
+
+# Core dimensions (used by all domains)
+/dbt/models/marts/core/ @platform-team
+
+# DBT configuration and shared macros
+/dbt/dbt_project.yml @platform-team
+/dbt/packages.yml @platform-team
+/dbt/macros/ @platform-team
+
+# DBT CI/CD
+/.github/workflows/dbt.yaml @platform-team
+
+# Documentation
+/docs/ @platform-team
+
+# Root files
+/README.md @platform-team

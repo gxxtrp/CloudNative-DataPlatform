@@ -1,0 +1,108 @@
+# DBT CI/CD
+name: DBT
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dbt/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dbt/**'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SQLFluff
+        run: pip install sqlfluff sqlfluff-templater-dbt
+
+      - name: Lint SQL
+        working-directory: dbt
+        run: sqlfluff lint models/
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install DBT
+        run: pip install dbt-core dbt-bigquery
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_DEV }}
+
+      - name: Setup DBT Profile
+        run: |
+          mkdir -p ~/.dbt
+          cat << EOF > ~/.dbt/profiles.yml
+          data_platform:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: dataplatform-dev
+                dataset: gold
+                location: US
+                threads: 4
+                keyfile: $GOOGLE_APPLICATION_CREDENTIALS
+          EOF
+
+      - name: DBT Deps
+        working-directory: dbt
+        run: dbt deps
+
+      - name: DBT Compile
+        working-directory: dbt
+        run: dbt compile
+
+      - name: DBT Test (schema only)
+        working-directory: dbt
+        run: dbt test --select "test_type:schema"
+
+  build-image:
+    name: Build Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_DEV }}
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push
+        working-directory: dbt
+        run: |
+          docker build -t us-central1-docker.pkg.dev/dataplatform-dev/data-platform/dbt:${{ github.sha }} .
+          docker push us-central1-docker.pkg.dev/dataplatform-dev/data-platform/dbt:${{ github.sha }}
+          docker tag us-central1-docker.pkg.dev/dataplatform-dev/data-platform/dbt:${{ github.sha }} \
+                     us-central1-docker.pkg.dev/dataplatform-dev/data-platform/dbt:latest
+          docker push us-central1-docker.pkg.dev/dataplatform-dev/data-platform/dbt:latest

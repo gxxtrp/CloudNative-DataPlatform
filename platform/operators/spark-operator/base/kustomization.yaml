@@ -1,0 +1,16 @@
+# Spark Operator Base Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: batch
+
+helmCharts:
+  - name: spark-operator
+    repo: https://kubeflow.github.io/spark-operator
+    version: 1.4.6
+    releaseName: spark-operator
+    namespace: batch
+    valuesFile: values.yaml
+
+resources:
+  - rbac.yaml

@@ -1,0 +1,49 @@
+# Kubernetes namespaces for data platform workloads
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+  labels:
+    app.kubernetes.io/part-of: data-platform
+    purpose: platform-services
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: orchestration
+  labels:
+    app.kubernetes.io/part-of: data-platform
+    purpose: workflow-orchestration
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: streaming
+  labels:
+    app.kubernetes.io/part-of: data-platform
+    purpose: stream-processing
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: batch
+  labels:
+    app.kubernetes.io/part-of: data-platform
+    purpose: batch-processing
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    app.kubernetes.io/part-of: data-platform
+    purpose: observability
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: catalog
+  labels:
+    app.kubernetes.io/part-of: data-platform
+    purpose: data-catalog

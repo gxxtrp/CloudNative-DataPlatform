@@ -1,0 +1,44 @@
+# ArgoCD Bootstrap Installation
+# Apply this first: kubectl apply -f platform/argocd/bootstrap/install.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+# Install ArgoCD using Helm
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 6.7.3
+    chart: argo-cd
+    helm:
+      values: |
+        server:
+          extraArgs:
+            - --insecure  # For internal use; add TLS in production
+        configs:
+          params:
+            server.insecure: true
+        controller:
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

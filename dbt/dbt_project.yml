@@ -1,0 +1,68 @@
+# DBT Project Configuration
+name: 'data_platform'
+version: '1.0.0'
+config-version: 2
+
+# Project paths
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Target paths (gitignored)
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Profiles
+profile: 'data_platform'
+
+# Model configurations
+models:
+  data_platform:
+    # Staging models - views
+    staging:
+      +materialized: view
+      +schema: silver
+      trips:
+        +tags: ['trips', 'staging']
+      payments:
+        +tags: ['payments', 'staging']
+      users:
+        +tags: ['users', 'staging']
+    
+    # Intermediate models - ephemeral or views
+    intermediate:
+      +materialized: ephemeral
+      trips:
+        +tags: ['trips', 'intermediate']
+      payments:
+        +tags: ['payments', 'intermediate']
+    
+    # Marts (Gold layer) - tables
+    marts:
+      +materialized: table
+      +schema: gold
+      core:
+        +tags: ['core', 'dimensions']
+      trips:
+        +tags: ['trips', 'facts']
+      payments:
+        +tags: ['payments', 'facts']
+
+# Variables
+vars:
+  # Date ranges for incremental models
+  start_date: '2024-01-01'
+  
+  # Surrogate key generation
+  surrogate_key_null_value: '-1'
+
+# Query settings
+query-comment: "dbt - {{ var('dbt_cloud_job_id', 'local') }}"
+
+# Require dbt version
+require-dbt-version: [">=1.7.0", "<2.0.0"]
