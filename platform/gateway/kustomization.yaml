@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - crds/gateway-api-v1.2.1.yaml
+- crds/kong-crds.yaml
 - kong/install.yaml
 - routes/tls-secret.yaml
 - routes/gateway.yaml

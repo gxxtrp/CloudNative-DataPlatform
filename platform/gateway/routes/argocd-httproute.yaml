@@ -7,6 +7,10 @@ spec:
   parentRefs:
   - name: platform-gateway
     namespace: kong
+    sectionName: http
+  - name: platform-gateway
+    namespace: kong
+    sectionName: https
   rules:
   - matches:
     - path:

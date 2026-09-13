@@ -9,6 +9,9 @@ nodeSelector:
 env:
   database: "off"
   router_flavor: "traditional"
+  admin_listen: "127.0.0.1:8444 http2 ssl"
+  status_listen: "0.0.0.0:8100"
+  proxy_listen: "0.0.0.0:8000, 0.0.0.0:8443 http2 ssl"
 
 proxy:
   enabled: true
@@ -38,6 +41,10 @@ ingressController:
   installCRDs: false
   nodeSelector:
     pool: core
+  args:
+  - --log-level=debug
+  - --feature-gates=GatewayAlpha=true
+  - --gateway-to-reconcile=kong/platform-gateway
   resources:
     requests:
       cpu: 50m
