@@ -1,0 +1,50 @@
+deployment:
+  kong:
+    enabled: true
+  daemonset: false
+
+nodeSelector:
+  pool: core
+
+env:
+  database: "off"
+  router_flavor: "traditional"
+
+proxy:
+  enabled: true
+  type: LoadBalancer
+  annotations:
+    cloud.google.com/load-balancer-type: "External"
+  externalTrafficPolicy: Local
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: 8000
+  tls:
+    enabled: true
+    servicePort: 443
+    containerPort: 8443
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+ingressController:
+  enabled: true
+  installCRDs: false
+  nodeSelector:
+    pool: core
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+admin:
+  enabled: false
