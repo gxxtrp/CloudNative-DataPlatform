@@ -8,8 +8,8 @@ metadata:
 spec:
   project: platform-dev
   source:
-    repoURL: git://git-server.platform.svc.cluster.local/repo.git
-    targetRevision: codex/refac
+    repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
+    targetRevision: main
     path: platform/gitops/dev/applications
   destination:
     server: https://kubernetes.default.svc
