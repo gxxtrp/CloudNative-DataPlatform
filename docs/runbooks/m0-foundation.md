@@ -7,10 +7,18 @@ The cluster, storage grants and GitOps acceptance workload are tracked in
 
 ## Validate locally
 
-Use Ruby/Bundler from [the tool setup](../setup/platform-tools-redhat.md) and
-Terraform **1.15.8**. The existing installer does not guarantee that Terraform
-version; check it before running the validation script. The Gemfile and lockfile
-pin Terraspace 2.2.20 and its Google plugin 0.5.0; the provider is pinned to 7.40.0.
+Use a Linux shell with Ruby **3.3**, Bundler **2.5.22**, Git, jq and Terraform
+**1.15.8** installed. Native gem compilation also needs a C/C++ toolchain, Make
+and Ruby development headers. The Gemfile and lockfile pin Terraspace 2.2.20
+and its Google plugin 0.5.0; the provider is pinned to 7.40.0 with Linux and
+Windows checksums. Install the Ruby dependencies from the repository root:
+
+```bash
+cd infra
+bundle config set --local path vendor/bundle
+bundle install
+cd ..
+```
 
 From the repository root, run:
 

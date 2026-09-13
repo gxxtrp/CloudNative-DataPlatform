@@ -1,0 +1,8 @@
+*.rb text eol=lf
+*.tf text eol=lf
+*.tfvars text eol=lf
+*.hcl text eol=lf
+*.example text eol=lf
+Gemfile text eol=lf
+Gemfile.lock text eol=lf
+.terraform-version text eol=lf
