@@ -1,0 +1,21 @@
+module "gke" {
+  source                     = "../../modules/gke"
+  project_id                 = var.project_id
+  region                     = var.region
+  name                       = var.name
+  node_locations             = var.node_locations
+  network_id                 = var.network_id
+  subnetwork_id              = var.subnetwork_id
+  pod_range_name             = var.pod_range_name
+  service_range_name         = var.service_range_name
+  master_ipv4_cidr_block     = var.master_ipv4_cidr_block
+  node_service_account_email = var.node_service_account_email
+  core_machine_type          = var.core_machine_type
+  core_min_nodes             = var.core_min_nodes
+  core_max_nodes             = var.core_max_nodes
+  compute_machine_type       = var.compute_machine_type
+  compute_min_nodes          = var.compute_min_nodes
+  compute_max_nodes          = var.compute_max_nodes
+  disk_size_gb               = var.disk_size_gb
+  deletion_protection        = var.deletion_protection
+}

@@ -1,0 +1,65 @@
+# ServiceAccount in platform namespace with GCP Workload Identity
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-workload
+  namespace: platform
+  annotations:
+    iam.gke.io/gcp-service-account: platform-dev-workload@sbx-workload-poc-508107.iam.gserviceaccount.com
+---
+# Scoped Role for platform-workload (least-privilege, configmaps only)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-workload-role
+  namespace: platform
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: platform-workload-binding
+  namespace: platform
+subjects:
+- kind: ServiceAccount
+  name: platform-workload
+  namespace: platform
+roleRef:
+  kind: Role
+  name: platform-workload-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# ServiceAccount in processing namespace without Workload Identity (for negative test)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: processing-workload
+  namespace: processing
+---
+# Scoped Role for processing-workload
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: processing-workload-role
+  namespace: processing
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: processing-workload-binding
+  namespace: processing
+subjects:
+- kind: ServiceAccount
+  name: processing-workload
+  namespace: processing
+roleRef:
+  kind: Role
+  name: processing-workload-role
+  apiGroup: rbac.authorization.k8s.io

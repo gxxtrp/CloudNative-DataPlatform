@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: processing
+  labels:
+    environment: dev
+    team: data-engineering
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingestion
+  labels:
+    environment: dev
+    team: data-engineering
+    managed-by: argocd

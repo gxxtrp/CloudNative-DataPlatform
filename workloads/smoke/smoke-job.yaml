@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: m0-smoke-workload
+  namespace: platform
+  labels:
+    app: m0-smoke
+    environment: dev
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: m0-smoke
+    spec:
+      serviceAccountName: platform-workload
+      restartPolicy: Never
+      nodeSelector:
+        pool: compute
+      tolerations:
+      - key: "workload"
+        operator: "Equal"
+        value: "compute"
+        effect: "NoSchedule"
+      containers:
+      - name: smoke-test
+        image: asia-southeast1-docker.pkg.dev/sbx-workload-poc-508107/platform-dev-images/smoke:v1
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -euo pipefail
+          echo '{"severity":"INFO","component":"m0-smoke","message":"Starting Milestone 0 smoke workload on compute node pool"}'
+          
+          TOKEN=$(curl -s -H "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token" | jq -r .access_token)
+          if [[ -z "${TOKEN}" || "${TOKEN}" == "null" ]]; then
+            echo '{"severity":"ERROR","component":"m0-smoke","message":"Failed to acquire Workload Identity token from metadata server"}'
+            exit 1
+          fi
+          echo '{"severity":"INFO","component":"m0-smoke","message":"Successfully acquired Workload Identity token"}'
+          
+          IDENTITY=$(curl -s -H "Metadata-Flavor: Google" "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/email")
+          echo "{\"severity\":\"INFO\",\"component\":\"m0-smoke\",\"message\":\"Active GCP service account: ${IDENTITY}\"}"
+          
+          PAYLOAD="{\"status\":\"SUCCESS\",\"milestone\":\"M0\",\"test\":\"workload-identity-gcs\",\"timestamp\":\"$(date -u +%FT%TZ)\",\"node_pool\":\"compute\"}"
+          echo "${PAYLOAD}" > /tmp/verification.json
+          
+          echo '{"severity":"INFO","component":"m0-smoke","message":"Uploading verification payload to lake bucket"}'
+          curl -s -f -X POST \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/verification.json \
+            "https://storage.googleapis.com/upload/storage/v1/b/sbx-workload-poc-508107-lake-dev/o?uploadType=media&name=smoke/verification.json"
+          
+          echo '{"severity":"INFO","component":"m0-smoke","message":"Reading back verification payload from lake bucket"}'
+          DOWNLOADED=$(curl -s -f \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "https://storage.googleapis.com/storage/v1/b/sbx-workload-poc-508107-lake-dev/o/smoke%2Fverification.json?alt=media")
+          
+          echo "{\"severity\":\"INFO\",\"component\":\"m0-smoke\",\"message\":\"Verification payload confirmed\",\"payload\":${DOWNLOADED}}"
+          echo '{"severity":"INFO","component":"m0-smoke","message":"Milestone 0 acceptance smoke workload PASSED successfully"}'
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

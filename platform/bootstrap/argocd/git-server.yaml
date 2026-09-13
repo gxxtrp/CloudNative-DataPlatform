@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-server
+  namespace: platform
+  labels:
+    app: git-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: git-server
+  template:
+    metadata:
+      labels:
+        app: git-server
+    spec:
+      nodeSelector:
+        pool: core
+      initContainers:
+      - name: init-repo
+        image: alpine/git:2.47.2
+        command:
+        - sh
+        - -c
+        - |
+          mkdir -p /git/repo.git
+          cd /git/repo.git
+          git init --bare
+          git config http.receivepack true
+          git config daemon.receivepack true
+          git config receive.denyCurrentBranch ignore
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /git
+      containers:
+      - name: git-daemon
+        image: alpine:3.21
+        command:
+        - sh
+        - -c
+        - |
+          apk add --no-cache git git-daemon
+          exec git daemon --verbose --export-all --base-path=/git --enable=receive-pack --reuseaddr /git
+        ports:
+        - containerPort: 9418
+          name: git
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /git
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      volumes:
+      - name: repo-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-server
+  namespace: platform
+  labels:
+    app: git-server
+spec:
+  ports:
+  - port: 9418
+    targetPort: 9418
+    name: git
+  selector:
+    app: git-server
+---
+# NetworkPolicy allowing Argo CD repo-server to pull from git-server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-argocd-to-git-server
+  namespace: platform
+spec:
+  podSelector:
+    matchLabels:
+      app: git-server
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: argocd
+    ports:
+    - protocol: TCP
+      port: 9418
