@@ -1,7 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kong-gateway
-  namespace: platform
-spec:
-  replicas: 2
