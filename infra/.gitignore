@@ -1,0 +1,11 @@
+/.bundle/
+/.terraspace-cache/
+/vendor/bundle/
+*.tfplan
+*.tfstate
+*.tfstate.*
+**/.terraform/
+/.validation/
+*.auto.tfvars
+*.auto.tfvars.json
+crash.log

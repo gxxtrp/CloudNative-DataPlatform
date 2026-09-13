@@ -1,0 +1,5 @@
+source "https://rubygems.org"
+
+# The lockfile created by the setup script pins the complete Ruby dependency set.
+gem "terraspace", "= 2.2.20"
+gem "terraspace_plugin_google", "= 0.5.0"
