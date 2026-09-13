@@ -1,0 +1,8 @@
+# Environment and secret files
+.env
+.env.*
+!.env.example
+
+# Temporary and local diagnostics
+wlan-report-latest.xml
+*.log
