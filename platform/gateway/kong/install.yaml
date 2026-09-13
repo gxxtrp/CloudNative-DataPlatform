@@ -754,7 +754,7 @@ metadata:
     app.kubernetes.io/component: app
 spec:
   replicas: 1
-  revisionHistoryLimit: 10
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
       app.kubernetes.io/name: kong

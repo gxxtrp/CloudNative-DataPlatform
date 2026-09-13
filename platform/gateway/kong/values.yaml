@@ -2,6 +2,7 @@ deployment:
   kong:
     enabled: true
   daemonset: false
+  revisionHistoryLimit: 2
 
 nodeSelector:
   pool: core
