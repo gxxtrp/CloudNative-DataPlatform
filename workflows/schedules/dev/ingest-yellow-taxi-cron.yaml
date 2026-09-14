@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: ingest-nyc-yellow-taxi-monthly
+  namespace: ingestion
+  labels:
+    tier: bronze
+    dataset: nyc-taxi
+    environment: dev
+spec:
+  schedule: "0 2 1 * *"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  workflowSpec:
+    workflowTemplateRef:
+      name: ingest-nyc-yellow-taxi

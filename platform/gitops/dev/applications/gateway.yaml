@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
     targetRevision: main
-    path: platform/gateway
+    path: platform/services/gateway
   destination:
     server: https://kubernetes.default.svc
     namespace: kong

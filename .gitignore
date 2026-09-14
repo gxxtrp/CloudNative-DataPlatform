@@ -3,6 +3,27 @@
 .env.*
 !.env.example
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Terraspace and Terraform
+.terraspace-cache/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+
 # Temporary and local diagnostics
 wlan-report-latest.xml
 *.log
+.DS_Store
+Thumbs.db
+

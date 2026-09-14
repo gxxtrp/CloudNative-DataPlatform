@@ -1,0 +1,75 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-nyc-yellow-taxi
+  namespace: ingestion
+  labels:
+    tier: bronze
+    dataset: nyc-taxi
+    pipeline: batch-ingestion
+spec:
+  entrypoint: ingest-pipeline
+  serviceAccountName: ingestion-runner
+  nodeSelector:
+    pool: compute
+  tolerations:
+  - key: "workload"
+    operator: "Equal"
+    value: "compute"
+    effect: "NoSchedule"
+  arguments:
+    parameters:
+    - name: year
+      value: "2024"
+    - name: month
+      value: "01"
+    - name: bucket
+      value: "sbx-workload-poc-508107-lake-bronze-dev"
+    - name: image
+      value: "asia-southeast1-docker.pkg.dev/sbx-workload-poc-508107/workload-images/public-batch-ingest:latest"
+
+  templates:
+  - name: ingest-pipeline
+    inputs:
+      parameters:
+      - name: year
+      - name: month
+      - name: bucket
+      - name: image
+    steps:
+    - - name: run-batch-ingest
+        template: run-batch-ingest
+        arguments:
+          parameters:
+          - name: year
+            value: "{{inputs.parameters.year}}"
+          - name: month
+            value: "{{inputs.parameters.month}}"
+          - name: bucket
+            value: "{{inputs.parameters.bucket}}"
+          - name: image
+            value: "{{inputs.parameters.image}}"
+
+  - name: run-batch-ingest
+    inputs:
+      parameters:
+      - name: year
+      - name: month
+      - name: bucket
+      - name: image
+    container:
+      image: "{{inputs.parameters.image}}"
+      args:
+      - "--year"
+      - "{{inputs.parameters.year}}"
+      - "--month"
+      - "{{inputs.parameters.month}}"
+      - "--bucket"
+      - "{{inputs.parameters.bucket}}"
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1024Mi

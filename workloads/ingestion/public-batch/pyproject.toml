@@ -1,0 +1,19 @@
+[project]
+name = "public-batch-ingestion"
+version = "0.1.0"
+description = "Public batch ingestion workload for NYC TLC Taxi records into Bronze Data Lake"
+requires-python = ">=3.11"
+dependencies = [
+    "google-cloud-storage>=2.14.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.12.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

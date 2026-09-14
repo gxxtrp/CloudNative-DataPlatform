@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: platform-workflows
+  name: platform-workflow-templates
   namespace: argocd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -10,10 +10,10 @@ spec:
   source:
     repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
     targetRevision: main
-    path: platform/services/argo-workflows
+    path: workflows/templates
   destination:
     server: https://kubernetes.default.svc
-    namespace: argo
+    namespace: ingestion
   syncPolicy:
     automated:
       prune: true
