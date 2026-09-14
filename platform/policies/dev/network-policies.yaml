@@ -38,7 +38,16 @@ spec:
     ports:
     - protocol: TCP
       port: 80
-  # 3. HTTPS egress to Google APIs / GCS / Artifact Registry
+  # 3. Kubernetes API server egress (GKE master and cluster service)
+  - to:
+    - ipBlock:
+        cidr: 172.16.0.0/28
+    - ipBlock:
+        cidr: 10.88.0.0/22
+    ports:
+    - protocol: TCP
+      port: 443
+  # 4. HTTPS egress to Google APIs / GCS / Artifact Registry
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -49,7 +58,7 @@ spec:
     ports:
     - protocol: TCP
       port: 443
-  # 4. Same-namespace egress
+  # 5. Same-namespace egress
   - to:
     - podSelector: {}
 ---
@@ -107,7 +116,16 @@ spec:
     ports:
     - protocol: TCP
       port: 80
-  # 3. HTTPS egress to Google APIs / GCS / Artifact Registry
+  # 3. Kubernetes API server egress (GKE master and cluster service)
+  - to:
+    - ipBlock:
+        cidr: 172.16.0.0/28
+    - ipBlock:
+        cidr: 10.88.0.0/22
+    ports:
+    - protocol: TCP
+      port: 443
+  # 4. HTTPS egress to Google APIs / GCS / Artifact Registry
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -118,11 +136,11 @@ spec:
     ports:
     - protocol: TCP
       port: 443
-  # 4. Same-namespace egress
+  # 5. Same-namespace egress
   - to:
     - podSelector: {}
 ---
-# Allow intra-namespace ingress for processing
+# Allow intra-namespace, kubelet probe, and webhook ingress for processing
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -133,8 +151,23 @@ spec:
   policyTypes:
   - Ingress
   ingress:
+  # 1. Intra-namespace traffic
   - from:
     - podSelector: {}
+  # 2. Kubelet health probes from nodes
+  - from:
+    - ipBlock:
+        cidr: 10.80.0.0/22
+    ports:
+    - protocol: TCP
+      port: 8081
+  # 3. GKE Control Plane to Spark admission webhook
+  - from:
+    - ipBlock:
+        cidr: 172.16.0.0/28
+    ports:
+    - protocol: TCP
+      port: 9443
 ---
 # Default deny ingress & egress for ingestion namespace
 apiVersion: networking.k8s.io/v1
@@ -176,7 +209,16 @@ spec:
     ports:
     - protocol: TCP
       port: 80
-  # 3. HTTPS egress to Google APIs / GCS / Artifact Registry
+  # 3. Kubernetes API server egress (GKE master and cluster service)
+  - to:
+    - ipBlock:
+        cidr: 172.16.0.0/28
+    - ipBlock:
+        cidr: 10.88.0.0/22
+    ports:
+    - protocol: TCP
+      port: 443
+  # 4. HTTPS egress to Google APIs / GCS / Artifact Registry
   - to:
     - ipBlock:
         cidr: 0.0.0.0/0
@@ -187,7 +229,7 @@ spec:
     ports:
     - protocol: TCP
       port: 443
-  # 4. Same-namespace egress
+  # 5. Same-namespace egress
   - to:
     - podSelector: {}
 ---
