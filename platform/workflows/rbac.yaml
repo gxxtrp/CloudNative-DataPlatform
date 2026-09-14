@@ -1,0 +1,66 @@
+---
+# UI Admin ServiceAccount used for Client Token Authentication in Argo Server
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-admin
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argo-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- kind: ServiceAccount
+  name: argo-admin
+  namespace: argo
+---
+# Ingestion Runner ServiceAccount (Namespace: ingestion)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ingestion-runner
+  namespace: ingestion
+  annotations:
+    iam.gke.io/gcp-service-account: platform-dev-workload@sbx-workload-poc-508107.iam.gserviceaccount.com
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ingestion-runner-workflow-binding
+  namespace: ingestion
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: ingestion-runner
+  namespace: ingestion
+---
+# Processing Runner ServiceAccount (Namespace: processing)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: processing-runner
+  namespace: processing
+  annotations:
+    iam.gke.io/gcp-service-account: platform-dev-workload@sbx-workload-poc-508107.iam.gserviceaccount.com
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: processing-runner-workflow-binding
+  namespace: processing
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: processing-runner
+  namespace: processing

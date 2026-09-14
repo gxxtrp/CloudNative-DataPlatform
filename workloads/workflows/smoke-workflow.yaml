@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: argo-smoke-test-
+  namespace: ingestion
+spec:
+  entrypoint: smoke-pipeline
+  serviceAccountName: ingestion-runner
+  nodeSelector:
+    pool: compute
+  tolerations:
+  - key: "workload"
+    operator: "Equal"
+    value: "compute"
+    effect: "NoSchedule"
+  templates:
+  - name: smoke-pipeline
+    steps:
+    - - name: write-bronze
+        template: write-bronze-test
+    - - name: verify-bronze
+        template: verify-bronze-test
+
+  - name: write-bronze-test
+    container:
+      image: google/cloud-sdk:slim
+      command: [sh, -c]
+      args:
+      - |
+        set -euo pipefail
+        echo "Validating Workload Identity in ingestion namespace..."
+        ACTIVE_SA=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
+        echo "Active GCP Identity: ${ACTIVE_SA}"
+        
+        TIMESTAMP=$(date -u +%FT%TZ)
+        TEST_FILE="/tmp/bronze-smoke-${TIMESTAMP}.json"
+        echo "{\"status\":\"SUCCESS\",\"orchestrator\":\"argo-workflows\",\"tier\":\"bronze\",\"timestamp\":\"${TIMESTAMP}\"}" > "${TEST_FILE}"
+        
+        echo "Uploading test object to Bronze Lake..."
+        gcloud storage cp "${TEST_FILE}" "gs://sbx-workload-poc-508107-lake-bronze-dev/smoke/argo-smoke.json"
+        echo "Bronze upload verified."
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 300m
+          memory: 256Mi
+
+  - name: verify-bronze-test
+    container:
+      image: google/cloud-sdk:slim
+      command: [sh, -c]
+      args:
+      - |
+        set -euo pipefail
+        echo "Reading back from Bronze Lake..."
+        CONTENT=$(gcloud storage cat "gs://sbx-workload-poc-508107-lake-bronze-dev/smoke/argo-smoke.json")
+        echo "Read back: ${CONTENT}"
+        echo "Argo Workflows end-to-end smoke verification PASSED."
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 300m
+          memory: 256Mi

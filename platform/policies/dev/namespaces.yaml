@@ -24,3 +24,13 @@ metadata:
     environment: dev
     team: data-engineering
     managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+

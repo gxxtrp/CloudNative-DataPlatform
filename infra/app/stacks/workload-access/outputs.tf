@@ -3,9 +3,14 @@ output "workload_service_account_email" {
   description = "Workload Google Service Account email."
 }
 
+output "workload_identity_bindings" {
+  value       = { for k, b in google_service_account_iam_member.k8s_workload_identity : k => b.id }
+  description = "Map of Workload Identity binding IDs."
+}
+
 output "workload_identity_binding" {
-  value       = google_service_account_iam_member.k8s_workload_identity.id
-  description = "Workload Identity binding ID."
+  value       = values(google_service_account_iam_member.k8s_workload_identity)[0].id
+  description = "Default Workload Identity binding ID for backward compatibility."
 }
 
 output "lake_storage_grants" {

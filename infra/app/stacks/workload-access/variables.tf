@@ -37,12 +37,21 @@ variable "workload_sa_name" {
 
 variable "workload_namespace" {
   type        = string
-  description = "Kubernetes namespace for workload execution."
+  description = "Default Kubernetes namespace for workload execution."
   default     = "platform"
 }
 
 variable "workload_ksa_name" {
   type        = string
-  description = "Kubernetes Service Account name for Workload Identity."
+  description = "Default Kubernetes Service Account name for Workload Identity."
   default     = "platform-workload"
+}
+
+variable "workload_identity_bindings" {
+  type = list(object({
+    namespace = string
+    ksa_name  = string
+  }))
+  default     = []
+  description = "List of Kubernetes ServiceAccounts to bind to Google Service Account."
 }

@@ -9,3 +9,4 @@ resources:
 - routes/certificate.yaml
 - routes/gateway.yaml
 - routes/argocd-httproute.yaml
+- routes/workflows-httproute.yaml

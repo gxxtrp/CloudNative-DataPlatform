@@ -13,3 +13,4 @@ spec:
   - "*.nip.io"
   - "*.34.87.177.6.nip.io"
   - "argocd.34.87.177.6.nip.io"
+  - "workflows.34.87.177.6.nip.io"
