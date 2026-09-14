@@ -12,7 +12,7 @@ data:
 
     # Create Polaris Iceberg Catalog Database & User
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-        CREATE USER polaris_user WITH ENCRYPTED PASSWORD 'polaris_secret_dev';
+        CREATE USER polaris_user WITH ENCRYPTED PASSWORD '$POLARIS_PASSWORD';
         CREATE DATABASE polaris OWNER polaris_user;
         GRANT ALL PRIVILEGES ON DATABASE polaris TO polaris_user;
         \c polaris
@@ -21,7 +21,7 @@ data:
 
     # Create Apicurio Schema Registry Database & User
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-        CREATE USER apicurio_user WITH ENCRYPTED PASSWORD 'apicurio_secret_dev';
+        CREATE USER apicurio_user WITH ENCRYPTED PASSWORD '$APICURIO_PASSWORD';
         CREATE DATABASE apicurio OWNER apicurio_user;
         GRANT ALL PRIVILEGES ON DATABASE apicurio TO apicurio_user;
         \c apicurio

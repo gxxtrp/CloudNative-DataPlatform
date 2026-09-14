@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+*secret.yaml
+!*secret.example.yaml
 
 # Python
 __pycache__/

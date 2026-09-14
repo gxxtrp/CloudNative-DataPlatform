@@ -5,6 +5,5 @@ namespace: catalog
 
 resources:
 - sa.yaml
-- secret.yaml
 - service.yaml
 - deployment.yaml

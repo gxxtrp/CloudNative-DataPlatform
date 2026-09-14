@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: platform-db
 
 resources:
-- secret.yaml
 - init-scripts-configmap.yaml
 - service.yaml
 - statefulset.yaml

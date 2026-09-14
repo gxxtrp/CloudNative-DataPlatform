@@ -26,15 +26,20 @@ spec:
         ports:
         - containerPort: 8181
           name: http-api
+        - containerPort: 8182
+          name: management
         env:
         - name: POLARIS_PERSISTENCE_TYPE
-          value: "eclipse-link"
+          value: "in-memory"
         - name: QUARKUS_DATASOURCE_DB_KIND
           value: "postgresql"
         - name: QUARKUS_DATASOURCE_JDBC_URL
           value: "jdbc:postgresql://postgres.platform-db.svc.cluster.local:5432/polaris"
         - name: QUARKUS_DATASOURCE_USERNAME
-          value: "polaris_user"
+          valueFrom:
+            secretKeyRef:
+              name: polaris-secrets
+              key: DB_USERNAME
         - name: QUARKUS_DATASOURCE_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -56,14 +61,14 @@ spec:
         readinessProbe:
           httpGet:
             path: /q/health/ready
-            port: 8181
+            port: 8182
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 5
         livenessProbe:
           httpGet:
             path: /q/health/live
-            port: 8181
+            port: 8182
           initialDelaySeconds: 30
           periodSeconds: 15
           timeoutSeconds: 5

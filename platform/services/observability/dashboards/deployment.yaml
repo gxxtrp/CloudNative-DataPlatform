@@ -27,9 +27,15 @@ spec:
           name: http
         env:
         - name: GF_SECURITY_ADMIN_USER
-          value: "admin"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin-credentials
+              key: admin-user
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "platform_grafana_admin"
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin-credentials
+              key: admin-password
         - name: GF_AUTH_ANONYMOUS_ENABLED
           value: "true"
         - name: GF_AUTH_ANONYMOUS_ORG_ROLE
