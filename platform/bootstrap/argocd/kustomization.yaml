@@ -3,3 +3,7 @@ kind: Kustomization
 namespace: argocd
 resources:
 - install.yaml
+
+patches:
+- path: cmd-params-patch.yaml
+- path: argocd-cm-patch.yaml
