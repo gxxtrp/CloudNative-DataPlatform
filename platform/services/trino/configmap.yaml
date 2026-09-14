@@ -28,6 +28,13 @@ data:
     query.max-memory-per-node=1GB
     discovery.uri=http://localhost:8080
 
+  worker-config.properties: |
+    coordinator=false
+    http-server.http.port=8080
+    query.max-memory=2GB
+    query.max-memory-per-node=1GB
+    discovery.uri=http://trino.trino.svc.cluster.local:8080
+
   iceberg.properties: |
     connector.name=iceberg
     iceberg.catalog.type=rest

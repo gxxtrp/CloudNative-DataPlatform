@@ -8,4 +8,6 @@ resources:
 - configmap.yaml
 - service.yaml
 - deployment.yaml
+- worker-deployment.yaml
+- scaledobject.yaml
 - httproute.yaml

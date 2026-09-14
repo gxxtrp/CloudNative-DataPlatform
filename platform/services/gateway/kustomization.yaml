@@ -10,3 +10,4 @@ resources:
 - routes/gateway.yaml
 - routes/argocd-httproute.yaml
 - routes/workflows-httproute.yaml
+- kong/hpa.yaml
