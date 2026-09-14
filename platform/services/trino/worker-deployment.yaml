@@ -37,7 +37,7 @@ spec:
         volumeMounts:
         - name: trino-config-vol
           mountPath: /etc/trino/node.properties
-          subPath: node.properties
+          subPath: worker-node.properties
         - name: trino-config-vol
           mountPath: /etc/trino/jvm.config
           subPath: jvm.config

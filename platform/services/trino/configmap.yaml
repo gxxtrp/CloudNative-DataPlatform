@@ -9,6 +9,10 @@ data:
     node.id=trino-coordinator-dev
     node.data-dir=/data/trino
 
+  worker-node.properties: |
+    node.environment=dev
+    node.data-dir=/data/trino
+
   jvm.config: |
     -server
     -Xmx2G
