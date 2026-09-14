@@ -6,6 +6,6 @@ resources:
 - crds/gateway-api-v1.2.1.yaml
 - crds/kong-crds.yaml
 - kong/install.yaml
-- routes/tls-secret.yaml
+- routes/certificate.yaml
 - routes/gateway.yaml
 - routes/argocd-httproute.yaml
