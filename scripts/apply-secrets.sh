@@ -42,7 +42,9 @@ kubectl create secret generic postgres-credentials \
   --from-literal=POSTGRES_DB="postgres" \
   --from-literal=POLARIS_PASSWORD="${POLARIS_DB_PASSWORD}" \
   --from-literal=APICURIO_PASSWORD="${APICURIO_DB_PASSWORD}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | \
+  kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
+  kubectl apply -f -
 
 # 2. catalog / polaris-secrets
 echo "-> Creating secret 'polaris-secrets' in namespace 'catalog'..."
@@ -51,7 +53,9 @@ kubectl create secret generic polaris-secrets \
   --namespace catalog \
   --from-literal=DB_USERNAME="${POLARIS_DB_USER}" \
   --from-literal=DB_PASSWORD="${POLARIS_DB_PASSWORD}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | \
+  kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
+  kubectl apply -f -
 
 # 3. schema-registry / apicurio-secrets
 echo "-> Creating secret 'apicurio-secrets' in namespace 'schema-registry'..."
@@ -60,7 +64,9 @@ kubectl create secret generic apicurio-secrets \
   --namespace schema-registry \
   --from-literal=DB_USERNAME="${APICURIO_DB_USER}" \
   --from-literal=DB_PASSWORD="${APICURIO_DB_PASSWORD}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | \
+  kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
+  kubectl apply -f -
 
 # 4. observability / grafana-admin-credentials
 echo "-> Creating secret 'grafana-admin-credentials' in namespace 'observability'..."
@@ -69,6 +75,8 @@ kubectl create secret generic grafana-admin-credentials \
   --namespace observability \
   --from-literal=admin-user="${GRAFANA_ADMIN_USER}" \
   --from-literal=admin-password="${GRAFANA_ADMIN_PASSWORD}" \
-  --dry-run=client -o yaml | kubectl apply -f -
+  --dry-run=client -o yaml | \
+  kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
+  kubectl apply -f -
 
 echo "All platform secrets applied successfully to cluster from .env."
