@@ -3,5 +3,8 @@ kind: Kustomization
 
 namespace: keda
 
+commonAnnotations:
+  argocd.argoproj.io/sync-options: ServerSideApply=true
+
 resources:
 - install.yaml
