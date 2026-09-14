@@ -161,10 +161,12 @@ spec:
     ports:
     - protocol: TCP
       port: 8081
-  # 3. GKE Control Plane to Spark admission webhook
+  # 3. GKE Control Plane and nodes to Spark admission webhook
   - from:
     - ipBlock:
         cidr: 172.16.0.0/28
+    - ipBlock:
+        cidr: 10.80.0.0/22
     ports:
     - protocol: TCP
       port: 9443
