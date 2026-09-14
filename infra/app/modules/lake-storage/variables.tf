@@ -1,20 +1,28 @@
 variable "project_id" {
   type        = string
-  description = "GCP Project ID."
+  description = "GCP project ID."
 }
 
 variable "location" {
   type        = string
-  description = "Region for storage bucket and Artifact Registry."
+  description = "Default GCP region or location for lake buckets."
 }
 
-variable "bucket_name" {
-  type        = string
-  description = "Globally unique lake storage bucket name."
+variable "buckets" {
+  type = map(object({
+    name                       = string
+    storage_class              = optional(string, "STANDARD")
+    location                   = optional(string, null)
+    versioning                 = optional(bool, true)
+    retention_days             = optional(number, null)
+    noncurrent_version_days    = optional(number, 7)
+    soft_delete_retention_days = optional(number, 0)
+    force_destroy              = optional(bool, false)
+  }))
+  description = "Map of Medallion storage buckets with their configurations."
 }
 
 variable "repository_id" {
   type        = string
-  description = "Artifact Registry Docker repository ID."
-  default     = "platform-images"
+  description = "Artifact Registry repository ID."
 }

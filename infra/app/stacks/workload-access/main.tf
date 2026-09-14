@@ -4,10 +4,12 @@ resource "google_service_account" "workload" {
   display_name = "Data platform workload identity (dev)"
 }
 
+# Grant objectUser across all Medallion tiers
 resource "google_storage_bucket_iam_member" "workload_lake" {
-  bucket = var.bucket_name
-  role   = "roles/storage.objectUser"
-  member = "serviceAccount:${google_service_account.workload.email}"
+  for_each = var.lake_buckets != null && length(var.lake_buckets) > 0 ? var.lake_buckets : { default = { name = var.bucket_name } }
+  bucket   = each.value.name
+  role     = "roles/storage.objectUser"
+  member   = "serviceAccount:${google_service_account.workload.email}"
 }
 
 resource "google_service_account_iam_member" "k8s_workload_identity" {

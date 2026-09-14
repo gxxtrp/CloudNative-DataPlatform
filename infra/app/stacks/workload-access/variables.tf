@@ -18,6 +18,12 @@ variable "bucket_name" {
   description = "Lake bucket name from data-services stack."
 }
 
+variable "lake_buckets" {
+  type        = map(any)
+  default     = {}
+  description = "Map of Medallion lake buckets from data-services stack."
+}
+
 variable "repository_id" {
   type        = string
   description = "Artifact Registry repository ID from data-services stack."
