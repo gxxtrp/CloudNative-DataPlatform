@@ -1,0 +1,31 @@
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: argo-workflows-metrics
+  namespace: argo
+  labels:
+    app.kubernetes.io/part-of: observability
+spec:
+  selector:
+    matchLabels:
+      app: workflow-controller
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: argo-server-metrics
+  namespace: argo
+  labels:
+    app.kubernetes.io/part-of: observability
+spec:
+  selector:
+    matchLabels:
+      app: argo-server
+  endpoints:
+  - port: 2746
+    interval: 30s
+    path: /metrics

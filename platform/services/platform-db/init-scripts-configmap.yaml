@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: platform-db
+data:
+  01-init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Executing initialization scripts for platform-db..."
+
+    # Create Polaris Iceberg Catalog Database & User
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE USER polaris_user WITH ENCRYPTED PASSWORD 'polaris_secret_dev';
+        CREATE DATABASE polaris OWNER polaris_user;
+        GRANT ALL PRIVILEGES ON DATABASE polaris TO polaris_user;
+        \c polaris
+        GRANT ALL ON SCHEMA public TO polaris_user;
+    EOSQL
+
+    # Create Apicurio Schema Registry Database & User
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE USER apicurio_user WITH ENCRYPTED PASSWORD 'apicurio_secret_dev';
+        CREATE DATABASE apicurio OWNER apicurio_user;
+        GRANT ALL PRIVILEGES ON DATABASE apicurio TO apicurio_user;
+        \c apicurio
+        GRANT ALL ON SCHEMA public TO apicurio_user;
+    EOSQL
+
+    echo "Platform databases initialized successfully."

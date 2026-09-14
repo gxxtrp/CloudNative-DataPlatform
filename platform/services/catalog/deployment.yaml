@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polaris
+  namespace: catalog
+  labels:
+    app.kubernetes.io/name: polaris
+    app.kubernetes.io/part-of: catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: polaris
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: polaris
+    spec:
+      serviceAccountName: polaris
+      nodeSelector:
+        pool: core
+      containers:
+      - name: polaris
+        image: apache/polaris:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8181
+          name: http-api
+        env:
+        - name: POLARIS_PERSISTENCE_TYPE
+          value: "eclipse-link"
+        - name: QUARKUS_DATASOURCE_DB_KIND
+          value: "postgresql"
+        - name: QUARKUS_DATASOURCE_JDBC_URL
+          value: "jdbc:postgresql://postgres.platform-db.svc.cluster.local:5432/polaris"
+        - name: QUARKUS_DATASOURCE_USERNAME
+          value: "polaris_user"
+        - name: QUARKUS_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: polaris-secrets
+              key: DB_PASSWORD
+        - name: QUARKUS_HTTP_PORT
+          value: "8181"
+        - name: QUARKUS_HTTP_HOST
+          value: "0.0.0.0"
+        - name: POLARIS_REALM
+          value: "default-realm"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1536Mi
+        readinessProbe:
+          httpGet:
+            path: /q/health/ready
+            port: 8181
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: 8181
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5

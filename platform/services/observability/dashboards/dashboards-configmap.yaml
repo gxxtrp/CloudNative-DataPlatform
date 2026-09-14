@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: observability
+data:
+  platform-overview.json: |
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "liveNow": false,
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+          "id": 1,
+          "title": "Platform Health & Orchestration",
+          "type": "row"
+        },
+        {
+          "fieldConfig": {
+            "defaults": { "color": { "mode": "palette-classic" }, "unit": "none" },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+          "id": 2,
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "title": "Argo Workflows Execution Status",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "Prometheus" },
+              "expr": "sum by (status) (argo_workflows_count)",
+              "legendFormat": "{{status}}"
+            }
+          ]
+        },
+        {
+          "fieldConfig": {
+            "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+          "id": 3,
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "title": "Kong Gateway Ingress Throughput",
+          "type": "timeseries",
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "Prometheus" },
+              "expr": "sum(rate(kong_http_requests_total[5m]))",
+              "legendFormat": "Total Requests / sec"
+            }
+          ]
+        }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 39,
+      "tags": ["platform", "argo", "kong"],
+      "templating": { "list": [] },
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "CloudNative Data Platform Overview",
+      "uid": "platform-overview",
+      "version": 1
+    }

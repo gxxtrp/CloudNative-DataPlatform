@@ -1,0 +1,30 @@
+apiVersion: monitoring.googleapis.com/v1
+kind: Rules
+metadata:
+  name: platform-alert-rules
+  namespace: observability
+  labels:
+    app.kubernetes.io/part-of: observability
+spec:
+  groups:
+  - name: platform.rules
+    rules:
+    - alert: ArgoWorkflowFailureRateHigh
+      expr: sum(rate(argo_workflows_error_count[5m])) / sum(rate(argo_workflows_count[5m])) > 0.15
+      for: 5m
+      labels:
+        severity: warning
+        team: platform
+      annotations:
+        summary: "Argo Workflows failure rate exceeded 15%"
+        description: "More than 15% of workflow executions failed over the last 5 minutes."
+
+    - alert: KongGatewayHigh5xxRate
+      expr: sum(rate(kong_http_requests_total{code=~"5.."}[5m])) > 0
+      for: 2m
+      labels:
+        severity: critical
+        team: platform
+      annotations:
+        summary: "Kong Gateway reporting HTTP 5xx upstream errors"
+        description: "Kong Ingress is receiving 5xx server errors from upstream services."

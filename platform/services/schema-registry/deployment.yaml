@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-registry
+  namespace: schema-registry
+  labels:
+    app.kubernetes.io/name: schema-registry
+    app.kubernetes.io/part-of: schema-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: schema-registry
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: schema-registry
+    spec:
+      nodeSelector:
+        pool: core
+      containers:
+      - name: schema-registry
+        image: quay.io/apicurio/apicurio-registry:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http-api
+        env:
+        - name: APICURIO_STORAGE_KIND
+          value: "sql"
+        - name: APICURIO_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres.platform-db.svc.cluster.local:5432/apicurio"
+        - name: APICURIO_DATASOURCE_USERNAME
+          value: "apicurio_user"
+        - name: APICURIO_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: apicurio-secrets
+              key: DB_PASSWORD
+        - name: QUARKUS_HTTP_PORT
+          value: "8080"
+        - name: QUARKUS_HTTP_HOST
+          value: "0.0.0.0"
+        resources:
+          requests:
+            cpu: 150m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5

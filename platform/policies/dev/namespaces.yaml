@@ -33,4 +33,50 @@ metadata:
     environment: dev
     team: platform
     managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-db
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: catalog
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: schema-registry
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trino
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    environment: dev
+    team: platform
+    managed-by: argocd
+
 

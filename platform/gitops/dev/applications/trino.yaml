@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-trino
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform-dev
+  source:
+    repoURL: https://github.com/gxxtrp/CloudNative-DataPlatform.git
+    targetRevision: main
+    path: platform/services/trino
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trino
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

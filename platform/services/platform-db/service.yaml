@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: platform-db
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: platform-db
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgres
+  selector:
+    app.kubernetes.io/name: postgres

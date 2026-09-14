@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: trino
+  namespace: trino
+  labels:
+    app.kubernetes.io/name: trino
+    app.kubernetes.io/part-of: trino
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  selector:
+    app.kubernetes.io/name: trino
