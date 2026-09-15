@@ -31,7 +31,7 @@ spec:
           name: management
         env:
         - name: POLARIS_PERSISTENCE_TYPE
-          value: "in-memory"
+          value: "relational-jdbc"
         - name: QUARKUS_DATASOURCE_DB_KIND
           value: "postgresql"
         - name: QUARKUS_DATASOURCE_JDBC_URL

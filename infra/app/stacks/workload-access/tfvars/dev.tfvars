@@ -15,5 +15,6 @@ workload_identity_bindings = [
   { namespace = "argo", ksa_name = "workflow-controller" },
   { namespace = "catalog", ksa_name = "polaris" },
   { namespace = "ingestion", ksa_name = "ingestion-runner" },
-  { namespace = "processing", ksa_name = "processing-runner" }
+  { namespace = "processing", ksa_name = "processing-runner" },
+  { namespace = "trino", ksa_name = "trino" }
 ]

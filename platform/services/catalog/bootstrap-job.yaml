@@ -75,4 +75,11 @@ spec:
             -H "Content-Type: application/json" \
             -d '{"catalogRole": {"name": "catalog_admin"}}' || true
 
+          echo "Granting TABLE_READ_DATA on bronze namespace to catalog_admin..."
+          curl -s -X PUT http://polaris.catalog.svc.cluster.local:8181/api/management/v1/catalogs/polaris-lakehouse/catalog-roles/catalog_admin/grants \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Polaris-Realm: POLARIS" \
+            -H "Content-Type: application/json" \
+            -d '{"grant": {"type": "namespace", "namespace": ["bronze"], "privilege": "TABLE_READ_DATA"}}' || true
+
           echo "Polaris catalog bootstrap complete."
