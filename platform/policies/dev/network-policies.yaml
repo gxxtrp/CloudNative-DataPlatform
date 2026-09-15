@@ -139,6 +139,18 @@ spec:
   # 5. Same-namespace egress
   - to:
     - podSelector: {}
+  # 6. Iceberg REST catalog API
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: catalog
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: polaris
+          app.kubernetes.io/component: server
+    ports:
+    - protocol: TCP
+      port: 8181
 ---
 # Allow intra-namespace, kubelet probe, and webhook ingress for processing
 apiVersion: networking.k8s.io/v1

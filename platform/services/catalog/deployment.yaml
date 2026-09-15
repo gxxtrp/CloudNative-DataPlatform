@@ -15,13 +15,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: polaris
+        app.kubernetes.io/component: server
     spec:
       serviceAccountName: polaris
       nodeSelector:
         pool: core
       containers:
       - name: polaris
-        image: apache/polaris:latest
+        image: apache/polaris:1.7.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8181
@@ -51,6 +52,10 @@ spec:
           value: "0.0.0.0"
         - name: POLARIS_REALM
           value: "POLARIS"
+        - name: POLARIS_REALM_CONTEXT_REALMS
+          value: "POLARIS"
+        - name: POLARIS_REALM_CONTEXT_REQUIRE_HEADER
+          value: "false"
         - name: POLARIS_BOOTSTRAP_CREDENTIALS
           value: "POLARIS,polaris-root-client,polaris-root-secret"
         resources:

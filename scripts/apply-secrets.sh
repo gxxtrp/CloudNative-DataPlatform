@@ -25,6 +25,8 @@ POSTGRES_USER="${POSTGRES_USER:-postgres}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}"
 POLARIS_DB_USER="${POLARIS_DB_USER:-polaris_user}"
 POLARIS_DB_PASSWORD="${POLARIS_DB_PASSWORD:?POLARIS_DB_PASSWORD must be set in .env}"
+POLARIS_CLIENT_ID="${POLARIS_CLIENT_ID:-polaris-root-client}"
+POLARIS_CLIENT_SECRET="${POLARIS_CLIENT_SECRET:?POLARIS_CLIENT_SECRET must be set in .env}"
 APICURIO_DB_USER="${APICURIO_DB_USER:-apicurio_user}"
 APICURIO_DB_PASSWORD="${APICURIO_DB_PASSWORD:?APICURIO_DB_PASSWORD must be set in .env}"
 GRAFANA_ADMIN_USER="${GRAFANA_ADMIN_USER:-admin}"
@@ -57,7 +59,17 @@ kubectl create secret generic polaris-secrets \
   kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
   kubectl apply -f -
 
-# 3. schema-registry / apicurio-secrets
+# 3. processing / polaris-client
+echo "-> Creating secret 'polaris-client' in namespace 'processing'..."
+kubectl create namespace processing --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret generic polaris-client \
+  --namespace processing \
+  --from-literal=credential="${POLARIS_CLIENT_ID}:${POLARIS_CLIENT_SECRET}" \
+  --dry-run=client -o yaml | \
+  kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
+  kubectl apply -f -
+
+# 4. schema-registry / apicurio-secrets
 echo "-> Creating secret 'apicurio-secrets' in namespace 'schema-registry'..."
 kubectl create namespace schema-registry --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic apicurio-secrets \
@@ -68,7 +80,7 @@ kubectl create secret generic apicurio-secrets \
   kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
   kubectl apply -f -
 
-# 4. observability / grafana-admin-credentials
+# 5. observability / grafana-admin-credentials
 echo "-> Creating secret 'grafana-admin-credentials' in namespace 'observability'..."
 kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic grafana-admin-credentials \

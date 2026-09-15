@@ -23,6 +23,21 @@ env:
   REPO: platform-dev-images
 
 jobs:
+  test-bronze-publisher:
+    name: Test NYC Taxi Bronze Publisher
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Unit Tests
+        run: python -m unittest discover -s workloads/processing/bronze-publisher/tests -v
+
   test-public-batch:
     name: Test NYC Taxi Public Batch Ingest
     runs-on: ubuntu-latest
@@ -76,5 +91,38 @@ jobs:
           tags: |
             ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/public-batch-ingest:latest
             ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/public-batch-ingest:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-push-bronze-publisher:
+    name: Build & Publish Bronze Publisher Image
+    needs: test-bronze-publisher
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: projects/${{ env.PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions-ci@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: workloads/processing/bronze-publisher
+          push: true
+          tags: |
+            ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/bronze-publisher:latest
+            ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/bronze-publisher:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

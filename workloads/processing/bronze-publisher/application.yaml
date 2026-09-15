@@ -1,0 +1,57 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: publish-nyc-yellow-taxi-2024-01
+  namespace: processing
+  labels:
+    app.kubernetes.io/name: nyc-yellow-taxi-bronze-publisher
+    app.kubernetes.io/component: bronze-publisher
+spec:
+  type: Python
+  mode: cluster
+  image: asia-southeast1-docker.pkg.dev/sbx-workload-poc-508107/platform-dev-images/bronze-publisher:latest
+  imagePullPolicy: Always
+  mainApplicationFile: local:///opt/spark/work-dir/publish.py
+  arguments:
+  - --source-uri
+  - gs://sbx-workload-poc-508107-lake-bronze-dev/nyc-taxi/yellow/year=2024/month=01/yellow_tripdata_2024-01.parquet
+  - --source-sha256
+  - c4d59da7bbc8abaeeeb1727947ee93d9891a71acb42854bd80db1571b2030510
+  - --year
+  - "2024"
+  - --month
+  - "01"
+  sparkVersion: 3.5.1
+  restartPolicy:
+    type: OnFailure
+    onFailureRetries: 2
+    onFailureRetryInterval: 10
+  driver:
+    cores: 1
+    coreLimit: 1200m
+    memory: 1536m
+    serviceAccount: spark-operator-spark
+    env:
+    - name: POLARIS_CREDENTIAL
+      valueFrom:
+        secretKeyRef:
+          name: polaris-client
+          key: credential
+    nodeSelector:
+      pool: compute
+    tolerations:
+    - key: workload
+      operator: Equal
+      value: compute
+      effect: NoSchedule
+  executor:
+    cores: 1
+    instances: 1
+    memory: 1536m
+    nodeSelector:
+      pool: compute
+    tolerations:
+    - key: workload
+      operator: Equal
+      value: compute
+      effect: NoSchedule
