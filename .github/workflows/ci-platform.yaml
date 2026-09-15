@@ -31,10 +31,21 @@ jobs:
       - name: Validate Platform Policies & Bootstrap
         run: |
           set -e
-          echo "=== Checking Policies and GitOps roots ==="
+          echo "=== Checking Policies and Bootstrap ==="
           kubectl kustomize platform/policies/dev > /dev/null
-          kubectl kustomize platform/gitops/dev > /dev/null
           kubectl kustomize platform/bootstrap/argocd > /dev/null
+
+      - name: Validate GitOps Manifests
+        run: |
+          set -e
+          echo "=== Checking GitOps Application Manifests ==="
+          python3 -c "
+          import glob, yaml
+          for f in sorted(glob.glob('platform/gitops/dev/**/*.yaml', recursive=True)):
+              print(f'Validating: {f}')
+              with open(f) as fp:
+                  list(yaml.safe_load_all(fp))
+          "
 
       - name: Validate Platform Services
         run: |
