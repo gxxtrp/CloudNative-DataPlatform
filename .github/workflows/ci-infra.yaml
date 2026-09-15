@@ -1,0 +1,42 @@
+name: CI - Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/ci-infra.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/ci-infra.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-terraform:
+    name: Lint & Validate Terraform Modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Check Terraform Formatting
+        run: terraform fmt -check -recursive infra/app/modules/
+
+      - name: Validate Modules
+        run: |
+          set -e
+          for mod in infra/app/modules/*/; do
+            if [ -d "$mod" ]; then
+              echo "Validating module: $mod"
+              (cd "$mod" && terraform init -backend=false && terraform validate)
+            fi
+          done

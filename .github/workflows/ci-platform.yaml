@@ -1,0 +1,55 @@
+name: CI - Platform & GitOps
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'platform/**'
+      - 'workflows/**'
+      - '.github/workflows/ci-platform.yaml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'platform/**'
+      - 'workflows/**'
+      - '.github/workflows/ci-platform.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-kustomize:
+    name: Build & Validate Kustomize Targets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Validate Platform Policies & Bootstrap
+        run: |
+          set -e
+          echo "=== Checking Policies and GitOps roots ==="
+          kubectl kustomize platform/policies/dev > /dev/null
+          kubectl kustomize platform/gitops/dev > /dev/null
+          kubectl kustomize platform/bootstrap/argocd > /dev/null
+
+      - name: Validate Platform Services
+        run: |
+          set -e
+          echo "=== Checking Platform Services ==="
+          for svc in platform/services/*/; do
+            if [ -f "${svc}kustomization.yaml" ]; then
+              echo "Validating kustomize service: $svc"
+              kubectl kustomize "$svc" > /dev/null
+            fi
+          done
+
+      - name: Validate Workflow Templates & Schedules
+        run: |
+          set -e
+          echo "=== Checking Workflows ==="
+          kubectl kustomize workflows/templates > /dev/null
+          kubectl kustomize workflows/schedules/dev > /dev/null

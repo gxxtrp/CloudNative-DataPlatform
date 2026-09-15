@@ -25,7 +25,7 @@ spec:
         - |
           set -e
           echo "Waiting for Polaris server readiness..."
-          until curl -s -f http://polaris.catalog.svc.cluster.local:8181/q/health/ready; do
+          until curl -s -X POST http://polaris.catalog.svc.cluster.local:8181/api/catalog/v1/oauth/tokens -H "Polaris-Realm: POLARIS" -d "grant_type=client_credentials&client_id=polaris-root-client&client_secret=polaris-root-secret&scope=PRINCIPAL_ROLE:ALL" | grep -q "access_token"; do
             sleep 3
           done
           echo "Polaris is ready. Requesting root OAuth2 token..."
