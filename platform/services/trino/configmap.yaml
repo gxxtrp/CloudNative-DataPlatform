@@ -46,6 +46,8 @@ data:
     iceberg.rest-catalog.warehouse=polaris-lakehouse
     iceberg.rest-catalog.security=OAUTH2
     iceberg.rest-catalog.oauth2.credential=polaris-root-client:polaris-root-secret
+    iceberg.rest-catalog.oauth2.scope=PRINCIPAL_ROLE:ALL
+    iceberg.rest-catalog.vended-credentials-enabled=true
     fs.native-gcs.enabled=true
 
   tpch.properties: |

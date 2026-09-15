@@ -29,7 +29,7 @@ spec:
         effect: "NoSchedule"
       containers:
       - name: trino-worker
-        image: trinodb/trino:450
+        image: trinodb/trino:455
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
