@@ -11,6 +11,10 @@ SPEC.loader.exec_module(publish)
 
 
 class PublisherContractTests(unittest.TestCase):
+    def test_nyc_wall_clock_timestamps_use_timestamp_ntz(self):
+        self.assertEqual(publish.EXPECTED_SCHEMA["tpep_pickup_datetime"], "timestamp_ntz")
+        self.assertEqual(publish.EXPECTED_SCHEMA["tpep_dropoff_datetime"], "timestamp_ntz")
+
     def test_known_tlc_schema_is_accepted(self):
         self.assertEqual(publish.schema_mismatches(publish.EXPECTED_SCHEMA), [])
 
