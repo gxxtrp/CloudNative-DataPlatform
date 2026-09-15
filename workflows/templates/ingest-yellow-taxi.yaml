@@ -26,7 +26,7 @@ spec:
     - name: bucket
       value: "sbx-workload-poc-508107-lake-bronze-dev"
     - name: image
-      value: "asia-southeast1-docker.pkg.dev/sbx-workload-poc-508107/workload-images/public-batch-ingest:latest"
+      value: "asia-southeast1-docker.pkg.dev/sbx-workload-poc-508107/platform-dev-images/public-batch-ingest:latest"
 
   templates:
   - name: ingest-pipeline

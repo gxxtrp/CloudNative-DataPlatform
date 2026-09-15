@@ -2888,6 +2888,9 @@ rules:
   resources:
   - workflowtaskresults
   verbs:
+  - create
+  - patch
+  - get
   - list
   - watch
   - deletecollection

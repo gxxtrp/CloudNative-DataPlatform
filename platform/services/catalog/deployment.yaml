@@ -50,7 +50,9 @@ spec:
         - name: QUARKUS_HTTP_HOST
           value: "0.0.0.0"
         - name: POLARIS_REALM
-          value: "default-realm"
+          value: "POLARIS"
+        - name: POLARIS_BOOTSTRAP_CREDENTIALS
+          value: "POLARIS,polaris-root-client,polaris-root-secret"
         resources:
           requests:
             cpu: 200m

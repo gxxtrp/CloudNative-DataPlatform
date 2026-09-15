@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: polaris-bootstrap-catalog
+  namespace: catalog
+  labels:
+    app.kubernetes.io/name: polaris
+    app.kubernetes.io/component: bootstrap
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: polaris
+        app.kubernetes.io/component: bootstrap
+    spec:
+      restartPolicy: OnFailure
+      nodeSelector:
+        pool: core
+      containers:
+      - name: bootstrap
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          set -e
+          echo "Waiting for Polaris server readiness..."
+          until curl -s -f http://polaris.catalog.svc.cluster.local:8181/q/health/ready; do
+            sleep 3
+          done
+          echo "Polaris is ready. Requesting root OAuth2 token..."
+          RESPONSE=$(curl -s -X POST http://polaris.catalog.svc.cluster.local:8181/api/catalog/v1/oauth/tokens \
+            -H "Polaris-Realm: POLARIS" \
+            -d "grant_type=client_credentials&client_id=polaris-root-client&client_secret=polaris-root-secret&scope=PRINCIPAL_ROLE:ALL")
+          
+          TOKEN=$(echo "$RESPONSE" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+          if [ -z "$TOKEN" ]; then
+            echo "Failed to acquire token from Polaris: $RESPONSE"
+            exit 1
+          fi
+          echo "Token successfully obtained."
+
+          echo "Ensuring polaris-lakehouse catalog exists..."
+          curl -s -X POST http://polaris.catalog.svc.cluster.local:8181/api/management/v1/catalogs \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Polaris-Realm: POLARIS" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "catalog": {
+                "name": "polaris-lakehouse",
+                "type": "INTERNAL",
+                "readOnly": false,
+                "properties": {
+                  "default-base-location": "gs://sbx-workload-poc-508107-lake-bronze-dev/iceberg/"
+                },
+                "storageConfigInfo": {
+                  "storageType": "GCS",
+                  "allowedLocations": [
+                    "gs://sbx-workload-poc-508107-lake-bronze-dev",
+                    "gs://sbx-workload-poc-508107-lake-silver-dev",
+                    "gs://sbx-workload-poc-508107-lake-gold-dev"
+                  ]
+                }
+              }
+            }' || true
+
+          echo "Assigning catalog_admin role to principal role service_admin..."
+          curl -s -X PUT http://polaris.catalog.svc.cluster.local:8181/api/management/v1/principal-roles/service_admin/catalog-roles/polaris-lakehouse \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Polaris-Realm: POLARIS" \
+            -H "Content-Type: application/json" \
+            -d '{"catalogRole": {"name": "catalog_admin"}}' || true
+
+          echo "Polaris catalog bootstrap complete."
