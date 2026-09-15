@@ -75,11 +75,21 @@ spec:
             -H "Content-Type: application/json" \
             -d '{"catalogRole": {"name": "catalog_admin"}}' || true
 
-          echo "Granting TABLE_READ_DATA on bronze namespace to catalog_admin..."
+          echo "Granting CATALOG_MANAGE_CONTENT to catalog_admin..."
           curl -s -X PUT http://polaris.catalog.svc.cluster.local:8181/api/management/v1/catalogs/polaris-lakehouse/catalog-roles/catalog_admin/grants \
             -H "Authorization: Bearer ${TOKEN}" \
             -H "Polaris-Realm: POLARIS" \
             -H "Content-Type: application/json" \
-            -d '{"grant": {"type": "namespace", "namespace": ["bronze"], "privilege": "TABLE_READ_DATA"}}' || true
+            -d '{"grant": {"type": "catalog", "privilege": "CATALOG_MANAGE_CONTENT"}}' || true
+
+          echo "Ensuring default namespaces exist in polaris-lakehouse..."
+          for ns in bronze silver gold; do
+            echo "Creating namespace ${ns}..."
+            curl -s -X POST http://polaris.catalog.svc.cluster.local:8181/api/catalog/v1/polaris-lakehouse/namespaces \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Polaris-Realm: POLARIS" \
+              -H "Content-Type: application/json" \
+              -d "{\"namespace\": [\"${ns}\"], \"properties\": {\"location\": \"gs://sbx-workload-poc-508107-lake-${ns}-dev/${ns}/\"}}" || true
+          done
 
           echo "Polaris catalog bootstrap complete."

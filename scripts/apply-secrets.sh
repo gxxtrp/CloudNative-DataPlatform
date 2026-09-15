@@ -26,7 +26,7 @@ POSTGRES_PASSWORD="${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}"
 POLARIS_DB_USER="${POLARIS_DB_USER:-polaris_user}"
 POLARIS_DB_PASSWORD="${POLARIS_DB_PASSWORD:?POLARIS_DB_PASSWORD must be set in .env}"
 POLARIS_CLIENT_ID="${POLARIS_CLIENT_ID:-polaris-root-client}"
-POLARIS_CLIENT_SECRET="${POLARIS_CLIENT_SECRET:?POLARIS_CLIENT_SECRET must be set in .env}"
+POLARIS_CLIENT_SECRET="${POLARIS_CLIENT_SECRET:-polaris-root-secret}"
 APICURIO_DB_USER="${APICURIO_DB_USER:-apicurio_user}"
 APICURIO_DB_PASSWORD="${APICURIO_DB_PASSWORD:?APICURIO_DB_PASSWORD must be set in .env}"
 GRAFANA_ADMIN_USER="${GRAFANA_ADMIN_USER:-admin}"
@@ -48,13 +48,30 @@ kubectl create secret generic postgres-credentials \
   kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
   kubectl apply -f -
 
-# 2. catalog / polaris-secrets
+# 2. catalog / polaris-secrets & polaris-rsa-keys
 echo "-> Creating secret 'polaris-secrets' in namespace 'catalog'..."
 kubectl create namespace catalog --dry-run=client -o yaml | kubectl apply -f -
 kubectl create secret generic polaris-secrets \
   --namespace catalog \
   --from-literal=DB_USERNAME="${POLARIS_DB_USER}" \
   --from-literal=DB_PASSWORD="${POLARIS_DB_PASSWORD}" \
+  --dry-run=client -o yaml | \
+  kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
+  kubectl apply -f -
+
+KEYS_DIR="${REPO_ROOT}/.keys"
+mkdir -p "${KEYS_DIR}"
+if [[ ! -f "${KEYS_DIR}/polaris-private.key" || ! -f "${KEYS_DIR}/polaris-public.key" ]]; then
+  echo "Generating persistent RSA key pair for Polaris token broker..."
+  openssl genpkey -algorithm RSA -out "${KEYS_DIR}/polaris-private.key" -pkeyopt rsa_keygen_bits:2048
+  openssl rsa -in "${KEYS_DIR}/polaris-private.key" -pubout -out "${KEYS_DIR}/polaris-public.key"
+fi
+
+echo "-> Creating secret 'polaris-rsa-keys' in namespace 'catalog'..."
+kubectl create secret generic polaris-rsa-keys \
+  --namespace catalog \
+  --from-file=private.key="${KEYS_DIR}/polaris-private.key" \
+  --from-file=public.key="${KEYS_DIR}/polaris-public.key" \
   --dry-run=client -o yaml | \
   kubectl annotate --local -f - "argocd.argoproj.io/compare-options=IgnoreExtraneous" -o yaml | \
   kubectl apply -f -

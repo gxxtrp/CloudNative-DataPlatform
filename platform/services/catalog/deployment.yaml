@@ -20,6 +20,31 @@ spec:
       serviceAccountName: polaris
       nodeSelector:
         pool: core
+      initContainers:
+      - name: polaris-schema-init
+        image: apache/polaris-admin-tool:1.7.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - bootstrap
+        - --realm=POLARIS
+        - -c=POLARIS,polaris-root-client,polaris-root-secret
+        env:
+        - name: POLARIS_PERSISTENCE_TYPE
+          value: "relational-jdbc"
+        - name: QUARKUS_DATASOURCE_DB_KIND
+          value: "postgresql"
+        - name: QUARKUS_DATASOURCE_JDBC_URL
+          value: "jdbc:postgresql://postgres.platform-db.svc.cluster.local:5432/polaris"
+        - name: QUARKUS_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: polaris-secrets
+              key: DB_USERNAME
+        - name: QUARKUS_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: polaris-secrets
+              key: DB_PASSWORD
       containers:
       - name: polaris
         image: apache/polaris:1.7.0
@@ -58,6 +83,22 @@ spec:
           value: "false"
         - name: POLARIS_BOOTSTRAP_CREDENTIALS
           value: "POLARIS,polaris-root-client,polaris-root-secret"
+        - name: POLARIS_AUTHENTICATION_TOKEN_BROKER_TYPE
+          value: "rsa-key-pair"
+        - name: POLARIS_AUTHENTICATION_TOKEN_BROKER_RSA_KEY_PAIR_PUBLIC_KEY_FILE
+          value: "/secrets/keys/public.key"
+        - name: POLARIS_AUTHENTICATION_TOKEN_BROKER_RSA_KEY_PAIR_PRIVATE_KEY_FILE
+          value: "/secrets/keys/private.key"
+        - name: POLARIS_CONFIG_NAMESPACE_CUSTOM_LOCATION_ENABLED
+          value: "true"
+        - name: POLARIS_FEATURES_ALLOW_NAMESPACE_CUSTOM_LOCATION
+          value: "true"
+        - name: POLARIS_FEATURES_ALLOW_UNSTRUCTURED_TABLE_LOCATION
+          value: "true"
+        volumeMounts:
+        - name: polaris-rsa-keys
+          mountPath: /secrets/keys
+          readOnly: true
         resources:
           requests:
             cpu: 200m
@@ -79,3 +120,7 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 15
           timeoutSeconds: 5
+      volumes:
+      - name: polaris-rsa-keys
+        secret:
+          secretName: polaris-rsa-keys
