@@ -7,4 +7,4 @@ resources:
 - install.yaml
 
 patches:
-- path: spark-service-account-patch.yaml
+- path: processing-runner-rolebinding-patch.yaml

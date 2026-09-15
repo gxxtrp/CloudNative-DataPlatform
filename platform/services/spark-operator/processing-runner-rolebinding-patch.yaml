@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-operator-spark
+  namespace: processing
+subjects:
+- kind: ServiceAccount
+  name: spark-operator-spark
+  namespace: processing
+- kind: ServiceAccount
+  name: processing-runner
+  namespace: processing
