@@ -59,6 +59,7 @@ spec:
       - name: image
     container:
       image: "{{inputs.parameters.image}}"
+      command: ["python", "-m", "src.ingest"]
       args:
       - "--year"
       - "{{inputs.parameters.year}}"
